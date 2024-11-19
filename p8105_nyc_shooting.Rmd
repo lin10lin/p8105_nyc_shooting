@@ -19,4 +19,4 @@ neighborhoods <- st_transform(neighborhoods, crs = st_crs(df_sf))
 df_joined <- st_join(df_sf, neighborhoods, left = TRUE)
 # Add neighborhood information to original data frame
 df$neighborhood <- df_joined$NTAName
-write.csv(df, "shooting_plus_neighborhood.csv", row.names = FALSE)
+write.csv(df, "shooting_neighborhood.csv", row.names = FALSE)

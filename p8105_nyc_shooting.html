@@ -378,7 +378,7 @@ neighborhoods &lt;- st_transform(neighborhoods, crs = st_crs(df_sf))
 df_joined &lt;- st_join(df_sf, neighborhoods, left = TRUE)
 # Add neighborhood information to original data frame
 df$neighborhood &lt;- df_joined$NTAName
-write.csv(df, &quot;shooting_plus_neighborhood.csv&quot;, row.names = FALSE)</code></pre>
+write.csv(df, &quot;shooting_neighborhood.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 </div>
 
