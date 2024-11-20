@@ -63,6 +63,8 @@ df = df %>%
 ```
 ## add time information
 for future study, i need to add variables related to date and time of the gunshot incidence.
+
+### decide whether the date of shooting is national holiday
 ```{r}
 df$OCCUR_DATE <- as.Date(df$OCCUR_DATE, format = "%m/%d/%Y")
 
@@ -83,6 +85,7 @@ df = df %>%
   )
 
 ```
+### decide whether the sky is dark at the shooting time, using the dawn and dusk time:
 ```{r}
 df$OCCUR_DATE <- as.character(df$OCCUR_DATE)
 df$OCCUR_TIME <- as.character(df$OCCUR_TIME)

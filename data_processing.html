@@ -421,6 +421,8 @@ df = df %&gt;%
 <h2>add time information</h2>
 <p>for future study, i need to add variables related to date and time of
 the gunshot incidence.</p>
+<div id="decide-whether-the-date-of-shooting-is-national-holiday" class="section level3">
+<h3>decide whether the date of shooting is national holiday</h3>
 <pre class="r"><code>df$OCCUR_DATE &lt;- as.Date(df$OCCUR_DATE, format = &quot;%m/%d/%Y&quot;)
 
 # Define the range of years, handling NA values
@@ -438,6 +440,10 @@ df = df %&gt;%
     Year = year(OCCUR_DATE),
     Month = month(OCCUR_DATE)
   )</code></pre>
+</div>
+<div id="decide-whether-the-sky-is-dark-at-the-shooting-time-using-the-dawn-and-dusk-time" class="section level3">
+<h3>decide whether the sky is dark at the shooting time, using the dawn
+and dusk time:</h3>
 <pre class="r"><code>df$OCCUR_DATE &lt;- as.character(df$OCCUR_DATE)
 df$OCCUR_TIME &lt;- as.character(df$OCCUR_TIME)
 
@@ -474,6 +480,7 @@ df &lt;- df %&gt;%
 df &lt;- df %&gt;%
   select(-DATE, -dawn, -dusk)
 write.csv(df, &quot;data_neighborhood_date_time.csv&quot;, row.names = FALSE)</code></pre>
+</div>
 </div>
 </div>
 
