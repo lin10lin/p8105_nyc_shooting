@@ -358,7 +358,9 @@ display: none;
 <pre class="r"><code>library(sf)
 library(dplyr)
 library(readr)
-library(stringr)</code></pre>
+library(stringr)
+library(lubridate)
+library(timeDate)</code></pre>
 <div id="this-part-focus-on-data-cleaning-tidying-and-merging." class="section level1">
 <h1>This part focus on data cleaning, tidying and merging.</h1>
 <div id="adding-neighborhood-information-to-the-shooting-dataset" class="section level2">
@@ -411,10 +413,28 @@ neighborhoods_csv = read_csv(&quot;neighbourhoods.csv&quot;)
 
 # Merge additional attributes if necessary
 df = df %&gt;%
-  left_join(neighborhoods_csv, by = c(&quot;Neighborhood&quot; = &quot;neighbourhood&quot;))
+  left_join(neighborhoods_csv, by = c(&quot;Neighborhood&quot; = &quot;neighbourhood&quot;))</code></pre>
+</div>
+<div id="add-time-information" class="section level2">
+<h2>add time information</h2>
+<p>for future study, i need to add variables related to date and time of
+the gunshot incidence.</p>
+<pre class="r"><code>df$OCCUR_DATE &lt;- as.Date(df$OCCUR_DATE, format = &quot;%m/%d/%Y&quot;)
 
-# Save the updated data frame
-write_csv(df, &quot;data_with_neighborhoods.csv&quot;)</code></pre>
+# Define the range of years, handling NA values
+years &lt;- seq(
+  year(min(df$OCCUR_DATE, na.rm = TRUE)),
+  year(max(df$OCCUR_DATE, na.rm = TRUE)),
+  by = 1
+)
+us_holidays = holidayNYSE(years)
+us_holidays = as.Date(us_holidays)
+# Add a new column indicating whether the date is a holiday
+df = df %&gt;%
+  mutate(
+    Is_Holiday = OCCUR_DATE %in% us_holidays
+  )
+write.csv(df, &quot;data_with_holidays.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 </div>
 

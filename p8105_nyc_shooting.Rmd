@@ -8,6 +8,9 @@ library(sf)
 library(dplyr)
 library(readr)
 library(stringr)
+library(lubridate)
+library(timeDate)
+
 ```
 # This part focus on data cleaning, tidying and merging.
 ## adding neighborhood information to the shooting dataset
@@ -55,6 +58,23 @@ neighborhoods_csv = read_csv("neighbourhoods.csv")
 df = df %>%
   left_join(neighborhoods_csv, by = c("Neighborhood" = "neighbourhood"))
 
-# Save the updated data frame
-write_csv(df, "data_with_neighborhoods.csv")
 ```
+## add time information
+for future study, i need to add variables related to date and time of the gunshot incidence.
+```{r}
+df$OCCUR_DATE <- as.Date(df$OCCUR_DATE, format = "%m/%d/%Y")
+
+# Define the range of years, handling NA values
+years <- seq(
+  year(min(df$OCCUR_DATE, na.rm = TRUE)),
+  year(max(df$OCCUR_DATE, na.rm = TRUE)),
+  by = 1
+)
+us_holidays = holidayNYSE(years)
+us_holidays = as.Date(us_holidays)
+# Add a new column indicating whether the date is a holiday
+df = df %>%
+  mutate(
+    Is_Holiday = OCCUR_DATE %in% us_holidays
+  )
+write.csv(df, "data_with_holidays.csv", row.names = FALSE)
