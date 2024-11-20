@@ -366,14 +366,14 @@ library(stringr)</code></pre>
 <pre class="r"><code>df=read_csv(&quot;NYPD_Shooting_Incident_Data__Historic__20241119.csv&quot;)
 
 # Ensure coordinate columns are numeric
-df &lt;- df %&gt;%
+df = df %&gt;%
   mutate(
     X_COORD_CD = as.numeric(X_COORD_CD),
     Y_COORD_CD = as.numeric(Y_COORD_CD)
   )
 
 # Convert to sf object with CRS EPSG:2263
-df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quot;), crs = 2263)
+df_sf = st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quot;), crs = 2263)
 
 # Download and read the GeoJSON file
 download.file(
@@ -381,7 +381,7 @@ download.file(
   destfile = &quot;neighbourhoods.geojson&quot;,
   mode = &quot;wb&quot;
 )
-neighbourhoods &lt;- st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
+neighbourhoods = st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
 <pre><code>## Reading layer `neighbourhoods&#39; from data source 
 ##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/neighbourhoods.geojson&#39; 
 ##   using driver `GeoJSON&#39;
@@ -392,14 +392,14 @@ neighbourhoods &lt;- st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
 ## Geodetic CRS:  WGS 84</code></pre>
 <pre class="r"><code># Check and transform CRS of neighborhoods
 if (st_crs(neighbourhoods)$epsg != 2263) {
-  neighbourhoods &lt;- st_transform(neighbourhoods, crs = 2263)
+  neighbourhoods = st_transform(neighbourhoods, crs = 2263)
 }
 
 # Perform the spatial join
-df_joined &lt;- st_join(df_sf, neighbourhoods, left = TRUE)
+df_joined = st_join(df_sf, neighbourhoods, left = TRUE)
 
 # Add neighborhood information to the data frame
-df$Neighborhood &lt;- df_joined$neighbourhood
+df$Neighborhood = df_joined$neighbourhood
 
 # Download and use the neighborhoods CSV file
 download.file(
@@ -407,10 +407,10 @@ download.file(
   destfile = &quot;neighbourhoods.csv&quot;,
   mode = &quot;wb&quot;
 )
-neighborhoods_csv &lt;- read_csv(&quot;neighbourhoods.csv&quot;)
+neighborhoods_csv = read_csv(&quot;neighbourhoods.csv&quot;)
 
 # Merge additional attributes if necessary
-df &lt;- df %&gt;%
+df = df %&gt;%
   left_join(neighborhoods_csv, by = c(&quot;Neighborhood&quot; = &quot;neighbourhood&quot;))
 
 # Save the updated data frame
