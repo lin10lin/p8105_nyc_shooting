@@ -61,6 +61,26 @@ df = df %>%
   left_join(neighborhoods_csv, by = c("Neighborhood" = "neighbourhood"))
 
 ```
+## add nta data
+```{r}
+df$X_COORD_CD <- as.numeric(df$X_COORD_CD)
+df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
+
+# Convert to sf object
+df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
+
+# Read neighborhood shapefile
+neighborhoods <- st_read("./nynta2020_24d/nynta2020.shp")
+
+# Transform CRS if necessary
+neighborhoods <- st_transform(neighborhoods, crs = st_crs(df_sf))
+
+# Perform spatial join
+df_joined <- st_join(df_sf, neighborhoods, left = TRUE)
+
+# Add neighborhood information to your original data frame
+df$NTA <- df_joined$NTAName  # Adjust based on actual column name
+```
 ## add time information
 for future study, i need to add variables related to date and time of the gunshot incidence.
 
