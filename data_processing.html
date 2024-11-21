@@ -521,9 +521,8 @@ df &lt;- df %&gt;%
     select(GeoName, NTAType, Pop) |&gt;
     rename(Total_population = Pop)
 )
-unique(popu$NTAType)</code></pre>
-<pre><code>## [1] 0 6 7 9 5 8</code></pre>
-<pre class="r"><code>df &lt;- df |&gt;
+
+df &lt;- df |&gt;
   left_join(popu, by = c(&quot;NTA&quot; = &quot;GeoName&quot;)) |&gt;
   mutate(
     NTAType = case_when(

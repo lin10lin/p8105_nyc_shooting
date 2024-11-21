@@ -156,7 +156,6 @@ popu <- suppressWarnings(
     select(GeoName, NTAType, Pop) |>
     rename(Total_population = Pop)
 )
-unique(popu$NTAType)
 
 df <- df |>
   left_join(popu, by = c("NTA" = "GeoName")) |>
