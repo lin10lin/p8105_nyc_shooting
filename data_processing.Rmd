@@ -12,7 +12,7 @@ library(lubridate)
 library(timeDate)
 library(suncalc)
 library(purrr)
-
+library(readxl)
 ```
 # This part focus on data cleaning, tidying and merging.
 ## adding neighborhood information to the shooting dataset
@@ -142,5 +142,35 @@ df <- df %>%
   )
 df <- df %>%
   select(-DATE, -dawn, -dusk)
-write.csv(df, "data_neighborhood_date_time.csv", row.names = FALSE)
 ```
+
+## adding total population data of each NTA
+
+```{r}
+popu <- suppressWarnings(
+  read_excel("nyc_detailed-race-and-ethnicity-data_2020_core-geographies.xlsx", 
+             sheet = 1,
+             range = "A4:I2599",
+             col_types = c("numeric", "text", "text", "text", "numeric", "text", "text", "numeric", "numeric")) |>
+    filter(`Orig Order` >= 2334 & `Orig Order` <= 2595) |>
+    select(GeoName, NTAType, Pop) |>
+    rename(Total_population = Pop)
+)
+unique(popu$NTAType)
+
+df <- df |>
+  left_join(popu, by = c("NTA" = "GeoName")) |>
+  mutate(
+    NTAType = case_when(
+      NTAType == 0 ~ "Residential",
+      NTAType == 9 ~ "Park",
+      NTAType == 8 ~ "Airport",
+      NTAType == 7 ~ "Cemetery",
+      NTAType == 6 ~ "Other Special Areas",
+      NTAType == 5 ~ "Rikers Island",
+      is.na(NTAType) ~ "Unknown")
+  )
+
+write.csv(df, "data_neighborhood_date_time_population.csv", row.names = FALSE)
+```
+
