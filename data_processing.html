@@ -533,9 +533,31 @@ df &lt;- df |&gt;
       NTAType == 6 ~ &quot;Other Special Areas&quot;,
       NTAType == 5 ~ &quot;Rikers Island&quot;,
       is.na(NTAType) ~ &quot;Unknown&quot;)
-  )
+  )</code></pre>
+</div>
+<div id="adding-cdta-data" class="section level2">
+<h2>adding cdta data</h2>
+<pre class="r"><code>df$X_COORD_CD &lt;- as.numeric(df$X_COORD_CD)
+df$Y_COORD_CD &lt;- as.numeric(df$Y_COORD_CD)
 
-write.csv(df, &quot;data_neighborhood_date_time_population.csv&quot;, row.names = FALSE)</code></pre>
+df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quot;), crs = 2263)
+
+cdta &lt;- st_read(&quot;./nycdta2020_24d/nycdta2020.shp&quot;)</code></pre>
+<pre><code>## Reading layer `nycdta2020&#39; from data source 
+##   `D:\Rproject\p8105_nyc_shooting\nycdta2020_24d\nycdta2020.shp&#39; 
+##   using driver `ESRI Shapefile&#39;
+## Simple feature collection with 71 features and 8 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 913175.1 ymin: 120128.4 xmax: 1067383 ymax: 272844.3
+## Projected CRS: NAD83 / New York Long Island (ftUS)</code></pre>
+<pre class="r"><code>cdta &lt;- st_transform(cdta, crs = st_crs(df_sf))
+
+df_joined &lt;- st_join(df_sf, cdta, left = TRUE)
+
+df$CDTA &lt;- df_joined$CDTA2020
+
+write.csv(df, &quot;data_neighborhood_date_time_population_cdta.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 </div>
 

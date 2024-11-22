@@ -170,6 +170,23 @@ df <- df |>
       is.na(NTAType) ~ "Unknown")
   )
 
-write.csv(df, "data_neighborhood_date_time_population.csv", row.names = FALSE)
 ```
 
+## adding cdta data
+
+```{r}
+df$X_COORD_CD <- as.numeric(df$X_COORD_CD)
+df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
+
+df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
+
+cdta <- st_read("./nycdta2020_24d/nycdta2020.shp")
+
+cdta <- st_transform(cdta, crs = st_crs(df_sf))
+
+df_joined <- st_join(df_sf, cdta, left = TRUE)
+
+df$CDTA <- df_joined$CDTA2020
+
+write.csv(df, "data_neighborhood_date_time_population_cdta.csv", row.names = FALSE)
+```
