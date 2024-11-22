@@ -557,6 +557,8 @@ df_joined &lt;- st_join(df_sf, cdta, left = TRUE)
 
 df$CDTA &lt;- df_joined$CDTA2020
 
+df$CDTA &lt;- gsub(&quot;([A-Z]{2})(\\d{2})&quot;, &quot;\\1 \\2&quot;, df$CDTA)
+
 write.csv(df, &quot;data_neighborhood_date_time_population_cdta.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 </div>

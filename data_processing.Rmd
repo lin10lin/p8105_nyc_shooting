@@ -188,5 +188,7 @@ df_joined <- st_join(df_sf, cdta, left = TRUE)
 
 df$CDTA <- df_joined$CDTA2020
 
+df$CDTA <- gsub("([A-Z]{2})(\\d{2})", "\\1 \\2", df$CDTA)
+
 write.csv(df, "data_neighborhood_date_time_population_cdta.csv", row.names = FALSE)
 ```
