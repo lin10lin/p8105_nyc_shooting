@@ -13,6 +13,8 @@ library(timeDate)
 library(suncalc)
 library(purrr)
 library(readxl)
+library(tidyverse)
+
 ```
 # This part focus on data cleaning, tidying and merging.
 ## adding neighborhood information to the shooting dataset

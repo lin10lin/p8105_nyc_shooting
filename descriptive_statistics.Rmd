@@ -1,0 +1,7 @@
+---
+title: "descriptive_statistics"
+output: html_document
+date: "2024-12-03"
+---
+
+# Descriptive Statistics of NYC Shooting Data

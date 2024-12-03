@@ -355,17 +355,16 @@ display: none;
 </div>
 
 
-<pre class="r"><code>library(sf)</code></pre>
-<pre><code>## Warning: package &#39;sf&#39; was built under R version 4.4.2</code></pre>
-<pre class="r"><code>library(dplyr)
+<pre class="r"><code>library(sf)
+library(dplyr)
 library(readr)
 library(stringr)
 library(lubridate)
 library(timeDate)
-library(suncalc)</code></pre>
-<pre><code>## Warning: package &#39;suncalc&#39; was built under R version 4.4.2</code></pre>
-<pre class="r"><code>library(purrr)
-library(readxl)</code></pre>
+library(suncalc)
+library(purrr)
+library(readxl)
+library(tidyverse)</code></pre>
 <div id="this-part-focus-on-data-cleaning-tidying-and-merging." class="section level1">
 <h1>This part focus on data cleaning, tidying and merging.</h1>
 <div id="adding-neighborhood-information-to-the-shooting-dataset" class="section level2">
@@ -390,7 +389,8 @@ download.file(
 )
 neighbourhoods = st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
 <pre><code>## Reading layer `neighbourhoods&#39; from data source 
-##   `D:\Rproject\p8105_nyc_shooting\neighbourhoods.geojson&#39; using driver `GeoJSON&#39;
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/neighbourhoods.geojson&#39; 
+##   using driver `GeoJSON&#39;
 ## Simple feature collection with 233 features and 2 fields
 ## Geometry type: MULTIPOLYGON
 ## Dimension:     XY
@@ -430,7 +430,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 # Read neighborhood shapefile
 neighborhoods &lt;- st_read(&quot;./nynta2020_24d/nynta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nynta2020&#39; from data source 
-##   `D:\Rproject\p8105_nyc_shooting\nynta2020_24d\nynta2020.shp&#39; 
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/nynta2020_24d/nynta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 262 features and 11 fields
 ## Geometry type: MULTIPOLYGON
@@ -544,7 +544,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 
 cdta &lt;- st_read(&quot;./nycdta2020_24d/nycdta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nycdta2020&#39; from data source 
-##   `D:\Rproject\p8105_nyc_shooting\nycdta2020_24d\nycdta2020.shp&#39; 
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/nycdta2020_24d/nycdta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 71 features and 8 fields
 ## Geometry type: MULTIPOLYGON
