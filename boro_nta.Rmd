@@ -1,0 +1,44 @@
+---
+title: "boro_nta"
+output: github_document
+date: "2024-12-03"
+---
+
+load packages
+```{r}
+library(ggplot2)
+library(readxl)
+library(readr)
+library(tidyverse)
+```
+
+load dataset
+```{r}
+df_descriptive=read_csv("filtered_merged_dataset_sample.csv")
+```
+
+
+Plot of the number of incidents in each borough for each year
+ 
+```{r}
+# Summarize data: count the number of incidents by borough and year
+incident_summary <- df_descriptive %>%
+  group_by(BORO, Year) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop") %>%
+  # Ensure missing years and boroughs are included
+  complete(BORO, Year = full_seq(min(df_descriptive$Year):max(df_descriptive$Year), 1), fill = list(Number_of_Incidents = 0))
+
+# Create the bar plot
+ggplot(incident_summary, aes(x = Year, y = Number_of_Incidents, fill = BORO)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Number of Incidents in Each Borough by Year",
+    x = "Year",
+    y = "Number of Incidents",
+    fill = "Borough"
+  ) +
+  scale_x_continuous(breaks = seq(min(df_descriptive$Year), max(df_descriptive$Year), by = 1)) +
+  theme_minimal()
+```
+ 
+ 
