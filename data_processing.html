@@ -355,14 +355,16 @@ display: none;
 </div>
 
 
-<pre class="r"><code>library(sf)
-library(dplyr)
+<pre class="r"><code>library(sf)</code></pre>
+<pre><code>## Warning: package &#39;sf&#39; was built under R version 4.4.2</code></pre>
+<pre class="r"><code>library(dplyr)
 library(readr)
 library(stringr)
 library(lubridate)
 library(timeDate)
-library(suncalc)
-library(purrr)
+library(suncalc)</code></pre>
+<pre><code>## Warning: package &#39;suncalc&#39; was built under R version 4.4.2</code></pre>
+<pre class="r"><code>library(purrr)
 library(readxl)
 library(tidyverse)</code></pre>
 <div id="this-part-focus-on-data-cleaning-tidying-and-merging." class="section level1">
@@ -389,8 +391,7 @@ download.file(
 )
 neighbourhoods = st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
 <pre><code>## Reading layer `neighbourhoods&#39; from data source 
-##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/neighbourhoods.geojson&#39; 
-##   using driver `GeoJSON&#39;
+##   `D:\Rproject\p8105_nyc_shooting\neighbourhoods.geojson&#39; using driver `GeoJSON&#39;
 ## Simple feature collection with 233 features and 2 fields
 ## Geometry type: MULTIPOLYGON
 ## Dimension:     XY
@@ -430,7 +431,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 # Read neighborhood shapefile
 neighborhoods &lt;- st_read(&quot;./nynta2020_24d/nynta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nynta2020&#39; from data source 
-##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/nynta2020_24d/nynta2020.shp&#39; 
+##   `D:\Rproject\p8105_nyc_shooting\nynta2020_24d\nynta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 262 features and 11 fields
 ## Geometry type: MULTIPOLYGON
@@ -544,7 +545,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 
 cdta &lt;- st_read(&quot;./nycdta2020_24d/nycdta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nycdta2020&#39; from data source 
-##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/nycdta2020_24d/nycdta2020.shp&#39; 
+##   `D:\Rproject\p8105_nyc_shooting\nycdta2020_24d\nycdta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 71 features and 8 fields
 ## Geometry type: MULTIPOLYGON
@@ -593,9 +594,29 @@ df_education$OCCUR_DATE &lt;- as.Date(df_education$OCCUR_DATE, format = &quot;%Y
 
 # Filter the incidents that happened between 2017 and 2023
 df_education &lt;- df_education %&gt;% 
-  filter(OCCUR_DATE &gt;= as.Date(&quot;2017-01-01&quot;) &amp; OCCUR_DATE &lt;= as.Date(&quot;2023-12-31&quot;))
-# add incident rate for nta and borough
+  filter(OCCUR_DATE &gt;= as.Date(&quot;2017-01-01&quot;) &amp; OCCUR_DATE &lt;= as.Date(&quot;2023-12-31&quot;))</code></pre>
+<pre class="r"><code>#add a column that shows the shooting incident rate of NTAs in that year
+df_education &lt;- df_education %&gt;%
+  group_by(NTA, Year) %&gt;%
+  mutate(incident_rate_by_year_nta = (n() / Total_population)*100) %&gt;%
+  ungroup()
 
+#add a column that shows the shooting incident rate of boroughs in that year
+boro_population &lt;- df_education %&gt;%
+  group_by(BORO, Year) %&gt;%
+  summarise(total_population_boro = sum(Total_population, na.rm = TRUE)) %&gt;%
+  ungroup()</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;BORO&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>df_education &lt;- df_education %&gt;%
+  left_join(boro_population, by = c(&quot;BORO&quot;, &quot;Year&quot;)) %&gt;%
+  group_by(BORO, Year) %&gt;%
+  mutate(incident_rate_by_year_boro = (n() / total_population_boro)*100) %&gt;%
+  ungroup()
+
+#Rename a column
+df_education &lt;- df_education %&gt;%
+  rename(Total_population_nta = Total_population)
 
 write.csv(df_education, &quot;data_final.csv&quot;, row.names = FALSE)</code></pre>
 </div>
