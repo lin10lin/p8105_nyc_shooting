@@ -100,8 +100,8 @@ ggplot(data = nta_map_data) +
   geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
   scale_fill_manual(
     values = c(
-      "0-80" = "#edf8fb",
-      "81-160" = "#b2e2e2",
+      "0-80" = "#b2e2e2",
+      "81-160" = "skyblue",
       "161-240" = "#66c2a4",
       "241-320" = "#2ca25f",
       "321-400" = "#006d2c"
