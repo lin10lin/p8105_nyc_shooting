@@ -18,6 +18,7 @@ library(sf)
 load dataset
 ```{r}
 df_descriptive=read_csv("filtered_merged_dataset_sample.csv")
+data_final <- read_csv("data_final.csv")
 ```
 
 
@@ -60,29 +61,25 @@ Load spatial data (replace with actual shapefile path)
 ```{r}
 nta_shape <- st_read("nynta2020_24d/nynta2020.shp")
 ```
-create a new column for non-capitalized NTA names
-```{r}
-nta_shape <- nta_shape %>%
-  mutate(NTAName_Lowercase = str_to_lower(NTAName))
-```
+
 
 ```{r}
 # Prepare incident data: count incidents per NTA_clean
-nta_incident_counts <- df_descriptive %>%
-  group_by(NTA_clean) %>%
+nta_incident_counts <- data_final %>%
+  group_by(NTA) %>%
   summarise(Number_of_Incidents = n(), .groups = "drop")
 
 # Merge spatial data with incident counts
 nta_map_data <- nta_shape %>%
-  left_join(nta_incident_counts, by = c("NTAName_Lowercase" = "NTA_clean"))
+  left_join(nta_incident_counts, by = c("NTAName" = "NTA"))
 
 # Create custom breaks for Number_of_Incidents
 nta_map_data <- nta_map_data %>%
   mutate(
     Incident_Range = cut(
       Number_of_Incidents,
-      breaks = seq(0, 1000, by = 200),  # Breaks from 0 to 1000, every 200 cases
-      labels = c("0-200", "201-400", "401-600", "601-800", "801-1000"),
+      breaks = seq(0, 400, by = 80),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-80", "81-160", "161-240", "241-320", "321-400"),
       include.lowest = TRUE
     )
   )
@@ -90,23 +87,24 @@ nta_map_data <- nta_map_data %>%
 
 
 ```
+
+
+
+
+
 Plot the map
 
-
-
-
 ```{r}
-
 # Plot the map with custom ranges
 ggplot(data = nta_map_data) +
   geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
   scale_fill_manual(
     values = c(
-      "0-200" = "#edf8fb",
-      "201-400" = "#b2e2e2",
-      "401-600" = "#66c2a4",
-      "601-800" = "#2ca25f",
-      "801-1000" = "#006d2c"
+      "0-80" = "#edf8fb",
+      "81-160" = "#b2e2e2",
+      "161-240" = "#66c2a4",
+      "241-320" = "#2ca25f",
+      "321-400" = "#006d2c"
     ),
     name = "Number of Incidents"
   ) +
@@ -123,7 +121,10 @@ ggplot(data = nta_map_data) +
   )
 
 ```
-```
+
+
+
+
 
 
 ```{r}

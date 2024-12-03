@@ -45,6 +45,24 @@ df_descriptive=read_csv("filtered_merged_dataset_sample.csv")
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
+``` r
+data_final <- read_csv("data_final.csv")
+```
+
+    ## Rows: 9820 Columns: 39
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr  (16): BORO, LOC_OF_OCCUR_DESC, LOC_CLASSFCTN_DESC, LOCATION_DESC, PERP_...
+    ## dbl  (15): INCIDENT_KEY, PRECINCT, JURISDICTION_CODE, X_COORD_CD, Y_COORD_CD...
+    ## num   (2): Number_poverty, Number_education
+    ## lgl   (3): STATISTICAL_MURDER_FLAG, Is_Holiday, Sky_Is_Dark
+    ## dttm  (1): OCCUR_DATETIME
+    ## date  (1): OCCUR_DATE
+    ## time  (1): OCCUR_TIME
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
 Plot of the number of incidents in each borough for each year
 
 ``` r
@@ -110,30 +128,23 @@ nta_shape <- st_read("nynta2020_24d/nynta2020.shp")
     ## Bounding box:  xmin: 913175.1 ymin: 120128.4 xmax: 1067383 ymax: 272844.3
     ## Projected CRS: NAD83 / New York Long Island (ftUS)
 
-create a new column for non-capitalized NTA names
-
-``` r
-nta_shape <- nta_shape %>%
-  mutate(NTAName_Lowercase = str_to_lower(NTAName))
-```
-
 ``` r
 # Prepare incident data: count incidents per NTA_clean
-nta_incident_counts <- df_descriptive %>%
-  group_by(NTA_clean) %>%
+nta_incident_counts <- data_final %>%
+  group_by(NTA) %>%
   summarise(Number_of_Incidents = n(), .groups = "drop")
 
 # Merge spatial data with incident counts
 nta_map_data <- nta_shape %>%
-  left_join(nta_incident_counts, by = c("NTAName_Lowercase" = "NTA_clean"))
+  left_join(nta_incident_counts, by = c("NTAName" = "NTA"))
 
 # Create custom breaks for Number_of_Incidents
 nta_map_data <- nta_map_data %>%
   mutate(
     Incident_Range = cut(
       Number_of_Incidents,
-      breaks = seq(0, 1000, by = 200),  # Breaks from 0 to 1000, every 200 cases
-      labels = c("0-200", "201-400", "401-600", "601-800", "801-1000"),
+      breaks = seq(0, 400, by = 80),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-80", "81-160", "161-240", "241-320", "321-400"),
       include.lowest = TRUE
     )
   )
@@ -147,11 +158,11 @@ ggplot(data = nta_map_data) +
   geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
   scale_fill_manual(
     values = c(
-      "0-200" = "#edf8fb",
-      "201-400" = "#b2e2e2",
-      "401-600" = "#66c2a4",
-      "601-800" = "#2ca25f",
-      "801-1000" = "#006d2c"
+      "0-80" = "#edf8fb",
+      "81-160" = "#b2e2e2",
+      "161-240" = "#66c2a4",
+      "241-320" = "#2ca25f",
+      "321-400" = "#006d2c"
     ),
     name = "Number of Incidents"
   ) +
@@ -168,4 +179,4 @@ ggplot(data = nta_map_data) +
   )
 ```
 
-![](boro_nta_files/figure-gfm/unnamed-chunk-8-1.png)<!-- --> \`\`\`
+![](boro_nta_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
