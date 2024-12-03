@@ -192,5 +192,46 @@ df$CDTA <- df_joined$CDTA2020
 
 df$CDTA <- gsub("([A-Z]{2})(\\d{2})", "\\1 \\2", df$CDTA)
 
-write.csv(df, "data_neighborhood_date_time_population_cdta.csv", row.names = FALSE)
+```
+
+## add poverty
+```{r}
+neighborhood_poverty <- read.csv("./data/neighborhood_poverty.csv")
+
+# Select specific columns from neighborhood_poverty
+neighborhood_poverty_selected <- neighborhood_poverty %>% 
+  filter(TimePeriod == '2017-21') %>% 
+  filter(GeoType == 'NTA2020' ) %>% 
+  select(Number, Percent, Geography)
+# Merge the dataframes on 'NTA' and 'Geography', keeping all information from data_processing
+df_poverty <- left_join(df, neighborhood_poverty_selected, by = c("NTA" = "Geography"))
+
+# Rename columns after merging
+df_poverty <- df_poverty %>% 
+  rename(Number_poverty = Number, Percent_poverty = Percent)
+```
+
+## add education
+```{r}
+neighborhood_education=read.csv("./data/graduated_high_school.csv")
+neighborhood_education_selected <- neighborhood_education %>% 
+  filter(TimePeriod == '2017-21') %>% 
+  filter(GeoType == 'NTA2020' ) %>% 
+  select(Number, Percent, Geography)
+# Merge the dataframes on 'NTA' and 'Geography', keeping all information from data_processing
+df_education <- left_join(df_poverty, neighborhood_education_selected, by = c("NTA" = "Geography"))
+
+# Rename columns after merging
+df_education <- df_education %>% 
+  rename(Number_education = Number, Percent_education = Percent)
+# filter between 2017 and 2023
+df_education$OCCUR_DATE <- as.Date(df_education$OCCUR_DATE, format = "%Y-%m-%d")
+
+# Filter the incidents that happened between 2017 and 2023
+df_education <- df_education %>% 
+  filter(OCCUR_DATE >= as.Date("2017-01-01") & OCCUR_DATE <= as.Date("2023-12-31"))
+# add incident rate for nta and borough
+
+
+write.csv(df_education, "data_final.csv", row.names = FALSE)
 ```

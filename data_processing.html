@@ -389,7 +389,7 @@ download.file(
 )
 neighbourhoods = st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
 <pre><code>## Reading layer `neighbourhoods&#39; from data source 
-##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/neighbourhoods.geojson&#39; 
+##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/neighbourhoods.geojson&#39; 
 ##   using driver `GeoJSON&#39;
 ## Simple feature collection with 233 features and 2 fields
 ## Geometry type: MULTIPOLYGON
@@ -430,7 +430,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 # Read neighborhood shapefile
 neighborhoods &lt;- st_read(&quot;./nynta2020_24d/nynta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nynta2020&#39; from data source 
-##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/nynta2020_24d/nynta2020.shp&#39; 
+##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/nynta2020_24d/nynta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 262 features and 11 fields
 ## Geometry type: MULTIPOLYGON
@@ -544,7 +544,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 
 cdta &lt;- st_read(&quot;./nycdta2020_24d/nycdta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nycdta2020&#39; from data source 
-##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/nycdta2020_24d/nycdta2020.shp&#39; 
+##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/nycdta2020_24d/nycdta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 71 features and 8 fields
 ## Geometry type: MULTIPOLYGON
@@ -557,9 +557,47 @@ df_joined &lt;- st_join(df_sf, cdta, left = TRUE)
 
 df$CDTA &lt;- df_joined$CDTA2020
 
-df$CDTA &lt;- gsub(&quot;([A-Z]{2})(\\d{2})&quot;, &quot;\\1 \\2&quot;, df$CDTA)
+df$CDTA &lt;- gsub(&quot;([A-Z]{2})(\\d{2})&quot;, &quot;\\1 \\2&quot;, df$CDTA)</code></pre>
+</div>
+<div id="add-poverty" class="section level2">
+<h2>add poverty</h2>
+<pre class="r"><code>neighborhood_poverty &lt;- read.csv(&quot;./data/neighborhood_poverty.csv&quot;)
 
-write.csv(df, &quot;data_neighborhood_date_time_population_cdta.csv&quot;, row.names = FALSE)</code></pre>
+# Select specific columns from neighborhood_poverty
+neighborhood_poverty_selected &lt;- neighborhood_poverty %&gt;% 
+  filter(TimePeriod == &#39;2017-21&#39;) %&gt;% 
+  filter(GeoType == &#39;NTA2020&#39; ) %&gt;% 
+  select(Number, Percent, Geography)
+# Merge the dataframes on &#39;NTA&#39; and &#39;Geography&#39;, keeping all information from data_processing
+df_poverty &lt;- left_join(df, neighborhood_poverty_selected, by = c(&quot;NTA&quot; = &quot;Geography&quot;))
+
+# Rename columns after merging
+df_poverty &lt;- df_poverty %&gt;% 
+  rename(Number_poverty = Number, Percent_poverty = Percent)</code></pre>
+</div>
+<div id="add-education" class="section level2">
+<h2>add education</h2>
+<pre class="r"><code>neighborhood_education=read.csv(&quot;./data/graduated_high_school.csv&quot;)
+neighborhood_education_selected &lt;- neighborhood_education %&gt;% 
+  filter(TimePeriod == &#39;2017-21&#39;) %&gt;% 
+  filter(GeoType == &#39;NTA2020&#39; ) %&gt;% 
+  select(Number, Percent, Geography)
+# Merge the dataframes on &#39;NTA&#39; and &#39;Geography&#39;, keeping all information from data_processing
+df_education &lt;- left_join(df_poverty, neighborhood_education_selected, by = c(&quot;NTA&quot; = &quot;Geography&quot;))
+
+# Rename columns after merging
+df_education &lt;- df_education %&gt;% 
+  rename(Number_education = Number, Percent_education = Percent)
+# filter between 2017 and 2023
+df_education$OCCUR_DATE &lt;- as.Date(df_education$OCCUR_DATE, format = &quot;%Y-%m-%d&quot;)
+
+# Filter the incidents that happened between 2017 and 2023
+df_education &lt;- df_education %&gt;% 
+  filter(OCCUR_DATE &gt;= as.Date(&quot;2017-01-01&quot;) &amp; OCCUR_DATE &lt;= as.Date(&quot;2023-12-31&quot;))
+# add incident rate for nta and borough
+
+
+write.csv(df_education, &quot;data_final.csv&quot;, row.names = FALSE)</code></pre>
 </div>
 </div>
 
