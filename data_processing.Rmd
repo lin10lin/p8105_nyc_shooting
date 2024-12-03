@@ -13,6 +13,8 @@ library(timeDate)
 library(suncalc)
 library(purrr)
 library(readxl)
+library(tidyverse)
+
 ```
 # This part focus on data cleaning, tidying and merging.
 ## adding neighborhood information to the shooting dataset
@@ -192,3 +194,36 @@ df$CDTA <- gsub("([A-Z]{2})(\\d{2})", "\\1 \\2", df$CDTA)
 
 write.csv(df, "data_neighborhood_date_time_population_cdta.csv", row.names = FALSE)
 ```
+## Add city council distric 
+```{r}
+df <- read_csv("data_neighborhood_date_time_population_cdta.csv")
+
+df <- df %>%
+  mutate(
+    Latitude = as.numeric(Latitude),
+    Longitude = as.numeric(Longitude)
+  ) %>%
+  drop_na(Latitude, Longitude)
+
+df_sf <- st_as_sf(df, coords = c("Longitude", "Latitude"), crs = 4326)
+
+city_council_sf <- st_read("city_council_districts.geojson")
+
+if (st_crs(df_sf) != st_crs(city_council_sf)) {
+  city_council_sf <- st_transform(city_council_sf, st_crs(df_sf))
+}
+
+# Perform spatial join using the correct column name
+joined_sf <- st_join(df_sf, city_council_sf["coun_dist"], left = TRUE)
+
+joined_sf <- joined_sf %>%
+  rename(Council_District = coun_dist)
+
+joined_df <- joined_sf %>%
+  st_drop_geometry()
+
+write_csv(joined_df, "data_with_city_council_districts.csv")
+
+
+```
+

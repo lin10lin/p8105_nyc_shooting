@@ -355,17 +355,16 @@ display: none;
 </div>
 
 
-<pre class="r"><code>library(sf)</code></pre>
-<pre><code>## Warning: package &#39;sf&#39; was built under R version 4.4.2</code></pre>
-<pre class="r"><code>library(dplyr)
+<pre class="r"><code>library(sf)
+library(dplyr)
 library(readr)
 library(stringr)
 library(lubridate)
 library(timeDate)
-library(suncalc)</code></pre>
-<pre><code>## Warning: package &#39;suncalc&#39; was built under R version 4.4.2</code></pre>
-<pre class="r"><code>library(purrr)
-library(readxl)</code></pre>
+library(suncalc)
+library(purrr)
+library(readxl)
+library(tidyverse)</code></pre>
 <div id="this-part-focus-on-data-cleaning-tidying-and-merging." class="section level1">
 <h1>This part focus on data cleaning, tidying and merging.</h1>
 <div id="adding-neighborhood-information-to-the-shooting-dataset" class="section level2">
@@ -390,7 +389,8 @@ download.file(
 )
 neighbourhoods = st_read(&quot;neighbourhoods.geojson&quot;)</code></pre>
 <pre><code>## Reading layer `neighbourhoods&#39; from data source 
-##   `D:\Rproject\p8105_nyc_shooting\neighbourhoods.geojson&#39; using driver `GeoJSON&#39;
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/neighbourhoods.geojson&#39; 
+##   using driver `GeoJSON&#39;
 ## Simple feature collection with 233 features and 2 fields
 ## Geometry type: MULTIPOLYGON
 ## Dimension:     XY
@@ -430,7 +430,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 # Read neighborhood shapefile
 neighborhoods &lt;- st_read(&quot;./nynta2020_24d/nynta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nynta2020&#39; from data source 
-##   `D:\Rproject\p8105_nyc_shooting\nynta2020_24d\nynta2020.shp&#39; 
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/nynta2020_24d/nynta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 262 features and 11 fields
 ## Geometry type: MULTIPOLYGON
@@ -544,7 +544,7 @@ df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quo
 
 cdta &lt;- st_read(&quot;./nycdta2020_24d/nycdta2020.shp&quot;)</code></pre>
 <pre><code>## Reading layer `nycdta2020&#39; from data source 
-##   `D:\Rproject\p8105_nyc_shooting\nycdta2020_24d\nycdta2020.shp&#39; 
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/nycdta2020_24d/nycdta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
 ## Simple feature collection with 71 features and 8 fields
 ## Geometry type: MULTIPOLYGON
@@ -560,6 +560,54 @@ df$CDTA &lt;- df_joined$CDTA2020
 df$CDTA &lt;- gsub(&quot;([A-Z]{2})(\\d{2})&quot;, &quot;\\1 \\2&quot;, df$CDTA)
 
 write.csv(df, &quot;data_neighborhood_date_time_population_cdta.csv&quot;, row.names = FALSE)</code></pre>
+</div>
+<div id="add-city-council-distric" class="section level2">
+<h2>Add city council distric</h2>
+<pre class="r"><code>df &lt;- read_csv(&quot;data_neighborhood_date_time_population_cdta.csv&quot;)</code></pre>
+<pre><code>## Rows: 28562 Columns: 32
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (16): BORO, LOC_OF_OCCUR_DESC, LOC_CLASSFCTN_DESC, LOCATION_DESC, PERP_...
+## dbl  (10): INCIDENT_KEY, PRECINCT, JURISDICTION_CODE, X_COORD_CD, Y_COORD_CD...
+## lgl   (3): STATISTICAL_MURDER_FLAG, Is_Holiday, Sky_Is_Dark
+## dttm  (1): OCCUR_DATETIME
+## date  (1): OCCUR_DATE
+## time  (1): OCCUR_TIME
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>df &lt;- df %&gt;%
+  mutate(
+    Latitude = as.numeric(Latitude),
+    Longitude = as.numeric(Longitude)
+  ) %&gt;%
+  drop_na(Latitude, Longitude)
+
+df_sf &lt;- st_as_sf(df, coords = c(&quot;Longitude&quot;, &quot;Latitude&quot;), crs = 4326)
+
+city_council_sf &lt;- st_read(&quot;city_council_districts.geojson&quot;)</code></pre>
+<pre><code>## Reading layer `city_council_districts&#39; from data source 
+##   `/Users/chenhuiyan/Desktop/CU_DS/p8105_nyc_shooting/city_council_districts.geojson&#39; 
+##   using driver `GeoJSON&#39;
+## Simple feature collection with 51 features and 3 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: -74.25559 ymin: 40.49613 xmax: -73.70001 ymax: 40.91553
+## Geodetic CRS:  WGS 84</code></pre>
+<pre class="r"><code>if (st_crs(df_sf) != st_crs(city_council_sf)) {
+  city_council_sf &lt;- st_transform(city_council_sf, st_crs(df_sf))
+}
+
+# Perform spatial join using the correct column name
+joined_sf &lt;- st_join(df_sf, city_council_sf[&quot;coun_dist&quot;], left = TRUE)
+
+joined_sf &lt;- joined_sf %&gt;%
+  rename(Council_District = coun_dist)
+
+joined_df &lt;- joined_sf %&gt;%
+  st_drop_geometry()
+
+write_csv(joined_df, &quot;data_with_city_council_districts.csv&quot;)</code></pre>
 </div>
 </div>
 
