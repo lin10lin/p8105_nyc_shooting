@@ -21,6 +21,13 @@ library(tidyverse)
     ## ✖ dplyr::lag()    masks stats::lag()
     ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
 
+``` r
+library(dplyr)
+library(sf)
+```
+
+    ## Linking to GEOS 3.11.0, GDAL 3.5.3, PROJ 9.1.0; sf_use_s2() is TRUE
+
 load dataset
 
 ``` r
@@ -62,3 +69,103 @@ ggplot(incident_summary, aes(x = Year, y = Number_of_Incidents, fill = BORO)) +
 ```
 
 ![](boro_nta_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
+nta_summary <- df_descriptive %>%
+  group_by(NTA_clean, BORO) %>%                 # Group by NTA and BORO
+  summarise(Number_of_Incidents = n(), .groups = "drop") %>%  # Count incidents
+  arrange(desc(Number_of_Incidents)) %>%  # Sort in descending order
+  slice_head(n = 10)
+nta_summary
+```
+
+    ## # A tibble: 10 × 3
+    ##    NTA_clean          BORO      Number_of_Incidents
+    ##    <chr>              <chr>                   <int>
+    ##  1 east harlem        MANHATTAN                2690
+    ##  2 bedford stuyvesant BROOKLYN                 1291
+    ##  3 east new york      BROOKLYN                  734
+    ##  4 brownsville        BROOKLYN                  651
+    ##  5 bushwick           BROOKLYN                  612
+    ##  6 jamaica            QUEENS                    442
+    ##  7 sunset park        BROOKLYN                  385
+    ##  8 flatbush           BROOKLYN                  197
+    ##  9 washington heights MANHATTAN                 192
+    ## 10 upper west side    MANHATTAN                 189
+
+\##Total incidents per NTA
+
+Load spatial data (replace with actual shapefile path)
+
+``` r
+nta_shape <- st_read("nynta2020_24d/nynta2020.shp")
+```
+
+    ## Reading layer `nynta2020' from data source 
+    ##   `/Users/wangmingyin/Desktop/data science 1/nyc_shooting_final/nynta2020_24d/nynta2020.shp' 
+    ##   using driver `ESRI Shapefile'
+    ## Simple feature collection with 262 features and 11 fields
+    ## Geometry type: MULTIPOLYGON
+    ## Dimension:     XY
+    ## Bounding box:  xmin: 913175.1 ymin: 120128.4 xmax: 1067383 ymax: 272844.3
+    ## Projected CRS: NAD83 / New York Long Island (ftUS)
+
+create a new column for non-capitalized NTA names
+
+``` r
+nta_shape <- nta_shape %>%
+  mutate(NTAName_Lowercase = str_to_lower(NTAName))
+```
+
+``` r
+# Prepare incident data: count incidents per NTA_clean
+nta_incident_counts <- df_descriptive %>%
+  group_by(NTA_clean) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+
+# Merge spatial data with incident counts
+nta_map_data <- nta_shape %>%
+  left_join(nta_incident_counts, by = c("NTAName_Lowercase" = "NTA_clean"))
+
+# Create custom breaks for Number_of_Incidents
+nta_map_data <- nta_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 1000, by = 200),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-200", "201-400", "401-600", "601-800", "801-1000"),
+      include.lowest = TRUE
+    )
+  )
+```
+
+Plot the map
+
+``` r
+# Plot the map with custom ranges
+ggplot(data = nta_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  scale_fill_manual(
+    values = c(
+      "0-200" = "#edf8fb",
+      "201-400" = "#b2e2e2",
+      "401-600" = "#66c2a4",
+      "601-800" = "#2ca25f",
+      "801-1000" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC NTAs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-1000, 200 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+![](boro_nta_files/figure-gfm/unnamed-chunk-8-1.png)<!-- --> \`\`\`

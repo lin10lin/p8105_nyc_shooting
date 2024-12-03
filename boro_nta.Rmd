@@ -10,6 +10,9 @@ library(ggplot2)
 library(readxl)
 library(readr)
 library(tidyverse)
+library(dplyr)
+library(sf)
+
 ```
 
 load dataset
@@ -39,6 +42,95 @@ ggplot(incident_summary, aes(x = Year, y = Number_of_Incidents, fill = BORO)) +
   ) +
   scale_x_continuous(breaks = seq(min(df_descriptive$Year), max(df_descriptive$Year), by = 1)) +
   theme_minimal()
+```
+
+
+```{r}
+nta_summary <- df_descriptive %>%
+  group_by(NTA_clean, BORO) %>%                 # Group by NTA and BORO
+  summarise(Number_of_Incidents = n(), .groups = "drop") %>%  # Count incidents
+  arrange(desc(Number_of_Incidents)) %>%  # Sort in descending order
+  slice_head(n = 10)
+nta_summary
+```
+ 
+##Total incidents per NTA
+ 
+Load spatial data (replace with actual shapefile path)
+```{r}
+nta_shape <- st_read("nynta2020_24d/nynta2020.shp")
+```
+create a new column for non-capitalized NTA names
+```{r}
+nta_shape <- nta_shape %>%
+  mutate(NTAName_Lowercase = str_to_lower(NTAName))
+```
+
+```{r}
+# Prepare incident data: count incidents per NTA_clean
+nta_incident_counts <- df_descriptive %>%
+  group_by(NTA_clean) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+
+# Merge spatial data with incident counts
+nta_map_data <- nta_shape %>%
+  left_join(nta_incident_counts, by = c("NTAName_Lowercase" = "NTA_clean"))
+
+# Create custom breaks for Number_of_Incidents
+nta_map_data <- nta_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 1000, by = 200),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-200", "201-400", "401-600", "601-800", "801-1000"),
+      include.lowest = TRUE
+    )
+  )
+
+
+
+```
+Plot the map
+
+
+
+
+```{r}
+
+# Plot the map with custom ranges
+ggplot(data = nta_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  scale_fill_manual(
+    values = c(
+      "0-200" = "#edf8fb",
+      "201-400" = "#b2e2e2",
+      "401-600" = "#66c2a4",
+      "601-800" = "#2ca25f",
+      "801-1000" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC NTAs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-1000, 200 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+```
+
+
+```{r}
+```
+
+
+```{r}
 ```
  
  
