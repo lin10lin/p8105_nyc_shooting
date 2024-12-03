@@ -230,8 +230,30 @@ df_education$OCCUR_DATE <- as.Date(df_education$OCCUR_DATE, format = "%Y-%m-%d")
 # Filter the incidents that happened between 2017 and 2023
 df_education <- df_education %>% 
   filter(OCCUR_DATE >= as.Date("2017-01-01") & OCCUR_DATE <= as.Date("2023-12-31"))
-# add incident rate for nta and borough
+```
 
+```{r}
+#add a column that shows the shooting incident rate of NTAs in that year
+df_education <- df_education %>%
+  group_by(NTA, Year) %>%
+  mutate(incident_rate_by_year_nta = (n() / Total_population)*100) %>%
+  ungroup()
+
+#add a column that shows the shooting incident rate of boroughs in that year
+boro_population <- df_education %>%
+  group_by(BORO, Year) %>%
+  summarise(total_population_boro = sum(Total_population, na.rm = TRUE)) %>%
+  ungroup()
+
+df_education <- df_education %>%
+  left_join(boro_population, by = c("BORO", "Year")) %>%
+  group_by(BORO, Year) %>%
+  mutate(incident_rate_by_year_boro = (n() / total_population_boro)*100) %>%
+  ungroup()
+
+#Rename a column
+df_education <- df_education %>%
+  rename(Total_population_nta = Total_population)
 
 write.csv(df_education, "data_final.csv", row.names = FALSE)
 ```
