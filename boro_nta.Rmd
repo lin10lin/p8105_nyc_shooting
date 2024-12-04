@@ -268,45 +268,51 @@ ggplot(data = boro_map_data) +
     axis.title.y = element_blank()
   )
 ```
+Plotly of boro map 
 
 
 ```{r}
 boro_map_data <- boro_map_data %>%
-  mutate(hover_text = paste("Borough:", boro_name,
-                            "<br>Number of Incidents:", Number_of_Incidents))
-```
+  mutate(
+    hover_text = paste("Borough:", boro_name, "<br>Total Incidents:", Number_of_Incidents)
+  )
 
-
-```{r}
-# Interactive plot using plotly
-plot <- plot_ly() %>%
-  add_sf(
-    data = boro_map_data,
-    split = ~boro_name,  # Separate polygons by boroughs
-    color = ~Number_of_Incidents,  # Color based on the number of incidents
-    colors = "viridis",  # Color palette
-    text = ~hover_text,  # Hover text
-    hoverinfo = "text"
-  ) %>%
+# Create the interactive plot with click functionality
+plot <- plot_ly(
+  data = boro_map_data,
+  type = "scattermapbox",
+  split = ~boro_name,  # Separate polygons by boroughs
+  color = ~Number_of_Incidents,  # Color based on the number of incidents
+  colors = "viridis",  # Use a color scale
+  text = ~hover_text,  # Display hover text
+  hoverinfo = "text",
+  marker = list(size = 8, opacity = 0.7)
+) %>%
   layout(
     title = "Total Number of Incidents Across NYC BOROs (2017-2023)",
-    geo = list(
-      resolution = 50,
-      showland = TRUE,
-      landcolor = "rgb(217, 217, 217)",
-      showlakes = TRUE,
-      lakecolor = "rgb(173, 216, 230)",
-      projection = list(type = "mercator")
+    mapbox = list(
+      style = "carto-positron",  # Base map style
+      center = list(lon = -74.0060, lat = 40.7128),  # Center map on NYC
+      zoom = 10
     )
   )
 
-# Display the plot
+# Add click functionality to display the borough name and number of incidents
+plot <- plot %>%
+  event_register("plotly_click") %>%
+  htmlwidgets::onRender("
+    function(el, x) {
+      el.on('plotly_click', function(d) {
+        var point = d.points[0];
+        var text = point.text;
+        alert('You clicked on: ' + text);
+      });
+    }
+  ")
+
+# Display the interactive plot
 plot
-
 ```
-
-
-
 
 
 
