@@ -154,3 +154,48 @@ top_10_nta_incident_rate <- top_10_incident_rate %>%
 # Display the table in the desired format
 kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in Each Borough, Including Population, Poverty, and Education Data")
 ```
+
+## Plot: Description of Victims
+
+```{r}
+# Plot: Description of Victims
+victim_summary <- df_descriptive %>%
+  filter(VIC_SEX %in% c("M", "F")) %>%  # Filter out unknown
+  group_by(VIC_SEX, VIC_AGE_GROUP, VIC_RACE) %>%
+  summarise(total_victims = n()) %>%
+  drop_na()
+
+
+# Plotting the description of male victims
+ggplot(victim_summary %>% filter(VIC_SEX == "M"), aes(x = VIC_AGE_GROUP, y = total_victims, fill = VIC_RACE)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(title = "Description of Male Shooting Victims by Age Group and Race",
+       x = "Victim Age Group",
+       y = "Number of Victims",
+       fill = "Victim Race") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plotting the description of female victims
+ggplot(victim_summary %>% filter(VIC_SEX == "F"), aes(x = VIC_AGE_GROUP, y = total_victims, fill = VIC_RACE)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(title = "Description of Female Shooting Victims by Age Group and Race",
+       x = "Victim Age Group",
+       y = "Number of Victims",
+       fill = "Victim Race") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Plot: Bar chart showing all victim's age
+
+```{r}
+# Plot: Bar chart showing victim's age
+ggplot(df_descriptive %>% filter(!is.na(VIC_AGE_GROUP)& VIC_AGE_GROUP != 1022), aes(x = VIC_AGE_GROUP)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Bar Chart of Victim's Age",
+       x = "Victim Age Group",
+       y = "Count of Victims") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
