@@ -1,6 +1,6 @@
 ---
 title: "boro_nta"
-output: github_document
+output: html_document
 date: "2024-12-03"
 ---
 
@@ -12,7 +12,8 @@ library(readr)
 library(tidyverse)
 library(dplyr)
 library(sf)
-
+library(plotly)
+library(geojsonio)
 ```
 
 load dataset
@@ -85,7 +86,6 @@ nta_map_data <- nta_map_data %>%
       include.lowest = TRUE
     )
   )
-
 
 
 ```
@@ -271,15 +271,43 @@ ggplot(data = boro_map_data) +
 
 
 ```{r}
-
+boro_map_data <- boro_map_data %>%
+  mutate(hover_text = paste("Borough:", boro_name,
+                            "<br>Number of Incidents:", Number_of_Incidents))
 ```
 
 
 ```{r}
+# Interactive plot using plotly
+plot <- plot_ly() %>%
+  add_sf(
+    data = boro_map_data,
+    split = ~boro_name,  # Separate polygons by boroughs
+    color = ~Number_of_Incidents,  # Color based on the number of incidents
+    colors = "viridis",  # Color palette
+    text = ~hover_text,  # Hover text
+    hoverinfo = "text"
+  ) %>%
+  layout(
+    title = "Total Number of Incidents Across NYC BOROs (2017-2023)",
+    geo = list(
+      resolution = 50,
+      showland = TRUE,
+      landcolor = "rgb(217, 217, 217)",
+      showlakes = TRUE,
+      lakecolor = "rgb(173, 216, 230)",
+      projection = list(type = "mercator")
+    )
+  )
+
+# Display the plot
+plot
+
 ```
 
 
-```{r}
-```
+
+
+
 
  
