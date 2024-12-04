@@ -9,13 +9,15 @@ date: "2024-12-03"
 library(ggplot2)
 library(readxl)
 library(readr)
-
+library(dplyr)
+library(knitr)
+library(tidyr)
 ```
 
 
 ```{r}
 # Load the dataset
-df_descriptive=read_csv("filtered_merged_dataset_sample.csv")
+df_descriptive=read_csv("data_final.csv")
 ```
 
 ## Plotting the line chart for shooting incidents over time
@@ -88,3 +90,67 @@ ggplot(df_descriptive, aes(x = as.POSIXct(OCCUR_TIME, format = "%H:%M:%S"))) +
        y = 'Density') +
   scale_x_datetime(date_labels = "%H:%M") +
   theme_minimal()
+```
+
+## Table showing Top 10 total incident NTA in Each Borough
+
+```{r}
+
+# Table showing Top 10 total incident NTA in Each Borough
+incident_by_nta_borough <- df_descriptive %>%
+  drop_na() %>%
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n()) %>%
+  arrange(BORO, desc(total_incidents)) %>%
+  group_by(BORO) %>%
+  slice_max(n = 10, order_by = total_incidents) %>%
+  select(-total_incidents) %>%
+  group_by(BORO) %>%
+  mutate(row_num = row_number()) %>%
+  pivot_wider(names_from = BORO, values_from = NTA) %>%
+  unnest(cols = c(BRONX, BROOKLYN, MANHATTAN, QUEENS, `STATEN ISLAND`)) %>%
+  select(row_num, everything())%>%
+  slice(1:10)
+
+# Display the table in the desired format
+kable(incident_by_nta_borough, caption = "Top 10 NTAs with Total Shooting Incidents in Each Borough (2017-2023)")
+```
+
+## Table showing Top 10 NTAs with the Highest Total Shooting Incidents
+
+```{r}
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents
+top_10_nta_overall <- df_descriptive %>%
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents")
+```
+
+## Table showing Top 10 NTAs with the Highest Incident Rate
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in Each Borough, Including Population, Poverty, and Education Data")
+```
