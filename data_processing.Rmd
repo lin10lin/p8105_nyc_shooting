@@ -72,7 +72,7 @@ df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
 df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
 
 # Read neighborhood shapefile
-neighborhoods <- st_read("./nynta2020_24d/nynta2020.shp")
+neighborhoods <- st_read("./nynta2010_24d/nynta2010.shp")
 
 # Transform CRS if necessary
 neighborhoods <- st_transform(neighborhoods, crs = st_crs(df_sf))
@@ -83,6 +83,7 @@ df_joined <- st_join(df_sf, neighborhoods, left = TRUE)
 # Add neighborhood information to your original data frame
 df$NTA <- df_joined$NTAName  # Adjust based on actual column name
 ```
+
 ## add time information
 for future study, i need to add variables related to date and time of the gunshot incidence.
 
