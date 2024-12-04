@@ -245,6 +245,7 @@ cdta_map_data <- cdta_map_data %>%
 # Plot the map with custom ranges
 ggplot(data = cdta_map_data) +
   geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "black") +  # Add labels
   scale_fill_manual(
     values = c(
       "0-80" = "#b2e2e2",
@@ -264,9 +265,14 @@ ggplot(data = cdta_map_data) +
   theme(
     axis.text = element_blank(),
     axis.ticks = element_blank(),
-    panel.grid = element_blank()
+    panel.grid = element_blank(), 
+    axis.title.x = element_blank(),  # Remove x-axis label
+    axis.title.y = element_blank()
   )
 ```
+
+    ## Warning: Removed 3 rows containing missing values or values outside the scale range
+    ## (`geom_text()`).
 
 ![](boro_nta_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
@@ -302,6 +308,7 @@ boro_map_data <- boro_map_data %>%
 # Plot the map with custom ranges
 ggplot(data = boro_map_data) +
   geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "black") +  # Add labels
   scale_fill_manual(
     values = c(
       "0-800" = "#b2e2e2",
@@ -321,8 +328,13 @@ ggplot(data = boro_map_data) +
   theme(
     axis.text = element_blank(),
     axis.ticks = element_blank(),
-    panel.grid = element_blank()
+    panel.grid = element_blank(),
+    axis.title.x = element_blank(),  # Remove x-axis label
+    axis.title.y = element_blank()
   )
 ```
 
-![](boro_nta_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+    ## Warning in st_point_on_surface.sfc(sf::st_zm(x)): st_point_on_surface may not
+    ## give correct results for longitude/latitude data
+
+![](boro_nta_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
