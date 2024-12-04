@@ -201,3 +201,127 @@ data_clean |>
 ```
 
 
+```{r}
+library(dplyr)
+library(plotly)
+
+
+incidents_data <- read.csv("data_final.csv")
+
+
+incidents_filtered <- incidents_data %>%
+  filter(Year >= 2017 & Year <= 2023)
+
+# Aggregate total incidents by CDTA
+incidents_by_cdta <- incidents_filtered %>%
+  group_by(CDTA) %>%
+  summarise(
+    total_incidents = n(),
+    # Calculate average Longitude and Latitude for each CDTA
+    Longitude = mean(Longitude, na.rm = TRUE),
+    Latitude = mean(Latitude, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# Define initial breaks from 0 to 400 with intervals of 5
+initial_breaks <- seq(0, 400, by = 5)
+
+
+max_incidents <- max(incidents_by_cdta$total_incidents, na.rm = TRUE)
+
+
+if (max_incidents > 400) {
+  # Extend breaks to include all incidents > 400
+  extended_breaks <- c(initial_breaks, Inf)
+  
+  # Create labels for all intervals, including the last one for incidents >400
+  labels <- c(
+    paste(initial_breaks[-length(initial_breaks)], initial_breaks[-1], sep = "-"),
+    paste0("401+", max_incidents)
+  )
+} else {
+  
+  extended_breaks <- initial_breaks
+  labels <- paste(initial_breaks[-length(initial_breaks)], initial_breaks[-1], sep = "-")
+}
+
+# Validate that the number of labels matches the number of intervals
+num_intervals <- length(extended_breaks) - 1
+num_labels <- length(labels)
+
+if (num_intervals != num_labels) {
+  stop("Number of labels does not match the number of intervals.")
+}
+
+# Assign incident ranges
+incidents_by_cdta <- incidents_by_cdta %>%
+  mutate(
+    incident_range = cut(
+      total_incidents,
+      breaks = extended_breaks,
+      include.lowest = TRUE,
+      right = FALSE,  # Left-inclusive intervals [a, b)
+      labels = labels
+    )
+  )
+
+
+print(table(incidents_by_cdta$incident_range, useNA = "ifany"))
+
+# Check for missing coordinates and exclude them
+missing_coords <- incidents_by_cdta %>%
+  filter(is.na(Longitude) | is.na(Latitude))
+
+if (nrow(missing_coords) > 0) {
+  cat("Warning: The following CDTAs have missing coordinates and will be excluded from the plot:\n")
+  print(missing_coords$CDTA)
+  
+  # Exclude CDTAs with missing coordinates
+  incidents_by_cdta <- incidents_by_cdta %>%
+    filter(!is.na(Longitude) & !is.na(Latitude))
+}
+
+
+# Replace 'your_mapbox_access_token' with your actual token from Mapbox
+Sys.setenv('MAPBOX_TOKEN' = 'your_mapbox_access_token')  # IMPORTANT: Replace with your token
+
+# Create the scatter map
+incident_map <- plot_ly(
+  data = incidents_by_cdta,
+  type = "scattermapbox",
+  mode = "markers",
+  lon = ~Longitude,  # Use exact column name
+  lat = ~Latitude,   # Use exact column name
+  color = ~incident_range,
+  colors = "inferno",  # Choose a valid color scale
+  marker = list(
+    size = 8,
+    opacity = 0.7
+  ),
+  text = ~paste(
+    "CDTA: ", CDTA,
+    "<br>Total Incidents: ", total_incidents,
+    "<br>Incident Range: ", incident_range
+  )
+) %>%
+  layout(
+    title = "Total Number of Incidents Across NYC CDTAs (2017-2023)",
+    mapbox = list(
+      style = "carto-positron",  # Map style
+      center = list(lon = -74.0060, lat = 40.7128),  # Centered on NYC
+      zoom = 10
+    ),
+    legend = list(title = list(text = 'Incident Range'))
+  )
+
+
+incident_map
+
+```
+
+
+
+
+
+
+
