@@ -428,11 +428,11 @@ df$Y_COORD_CD &lt;- as.numeric(df$Y_COORD_CD)
 df_sf &lt;- st_as_sf(df, coords = c(&quot;X_COORD_CD&quot;, &quot;Y_COORD_CD&quot;), crs = 2263)
 
 # Read neighborhood shapefile
-neighborhoods &lt;- st_read(&quot;./nynta2010_24d/nynta2010.shp&quot;)</code></pre>
-<pre><code>## Reading layer `nynta2010&#39; from data source 
-##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/nynta2010_24d/nynta2010.shp&#39; 
+neighborhoods &lt;- st_read(&quot;./nynta2020_24d/nynta2020.shp&quot;)</code></pre>
+<pre><code>## Reading layer `nynta2020&#39; from data source 
+##   `/Users/hayashiakira/Desktop/p8105_nyc_shooting/nynta2020_24d/nynta2020.shp&#39; 
 ##   using driver `ESRI Shapefile&#39;
-## Simple feature collection with 195 features and 7 fields
+## Simple feature collection with 262 features and 11 fields
 ## Geometry type: MULTIPOLYGON
 ## Dimension:     XY
 ## Bounding box:  xmin: 913175.1 ymin: 120128.4 xmax: 1067383 ymax: 272844.3

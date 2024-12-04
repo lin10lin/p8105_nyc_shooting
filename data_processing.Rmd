@@ -72,7 +72,7 @@ df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
 df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
 
 # Read neighborhood shapefile
-neighborhoods <- st_read("./nynta2010_24d/nynta2010.shp")
+neighborhoods <- st_read("./nynta2020_24d/nynta2020.shp")
 
 # Transform CRS if necessary
 neighborhoods <- st_transform(neighborhoods, crs = st_crs(df_sf))
