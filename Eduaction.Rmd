@@ -2,62 +2,197 @@
 title: "Untitled"
 author: "Chenhui Yan"
 date: "2024-12-02"
-output: github_document
+output: html_document
 ---
 ```{r}
-# Load necessary library
-library(readxl)
+library(dplyr)
+library(plotly)
+library(ggplot2)
 
-# Load the Excel file and read the relevant sheet into a DataFrame
-file_path = "Soc_1822_CCD.xlsx"
-sheet_name = "SocData"
+```
 
-# Read the specific sheet
-df = read_excel(file_path, sheet = sheet_name)
+## Education
+Is there an association between the percentage of people who graduated high school and the incidence rate 1) across neighborhoods in NYC and 2) across neighborhoods in each borough?
 
-# List of columns to extract based on your dataset description
-columns_to_extract = c(
-  'GeogName', 'Pop3plEnE', 'SE_NScPScE', 'SE_KndgtnE', 'SE_G1t8E',
-  'SE_G9t12E', 'SE_ClgGScE', 'EA_P25plE', 'EA_LT9GE', 'EA_9t12NDE',
-  'EA_HScGrdE', 'EA_SClgNDE', 'EA_AscDE', 'EA_BchDE', 'EA_GrdPfDE',
-  'EA_LTHSGrE', 'EA_BchDHE'
-)
+```{r}
+data_clean <- read.csv("data_final.csv")
+# List all column names
+names(data_clean)
 
-# Check which columns are available in the dataset and select those
-available_columns = columns_to_extract[columns_to_extract %in% colnames(df)]
+# Check the structure of the data frame
+str(data_clean)
 
-# Create a new DataFrame with only the available columns
-selected_columns_df = df[, available_columns]
 
-# Create a mapping of old column names to new, more understandable names
-column_name_mapping = c(
-  'GeogName' = 'City Council districts',
-  'Pop3plEnE' = 'Population 3 Years and Over Enrolled in School',
-  'SE_NScPScE' = 'Nursery School, Preschool',
-  'SE_KndgtnE' = 'Kindergarten',
-  'SE_G1t8E' = 'Elementary School (Grades 1-8)',
-  'SE_G9t12E' = 'High School (Grades 9-12)',
-  'SE_ClgGScE' = 'College or Graduate School',
-  'EA_P25plE' = 'Population 25 Years and Over',
-  'EA_LT9GE' = 'Less Than 9th Grade',
-  'EA_9t12NDE' = '9th to 12th Grade, No Diploma',
-  'EA_HScGrdE' = 'High School Graduate (Includes Equivalency)',
-  'EA_SClgNDE' = 'Some College, No Degree',
-  'EA_AscDE' = 'Associate\'s Degree',
-  'EA_BchDE' = 'Bachelor\'s Degree',
-  'EA_GrdPfDE' = 'Graduate or Professional Degree',
-  'EA_LTHSGrE' = 'Less Than High School Graduate',
-  'EA_BchDHE' = 'Bachelor\'s Degree or Higher'
-)
+# Step 1: Check the structure of your dataset to ensure the necessary columns exist
+head(data_clean)
+```
 
-# Rename the columns in the DataFrame
-names(selected_columns_df) = column_name_mapping[names(selected_columns_df)]
+## Education across neighborhoods in NYC
 
-# Display the first few rows of the resulting DataFrame
-print(head(selected_columns_df))
+```{r}
+# Calculate the correlation between the poverty percentage and the incident rate
+correlation <- cor(data_clean$incident_rate_by_year_nta, data_clean$Percent_education, use = "complete.obs")
+print(paste("Correlation coefficient: ", correlation))
 
-# Write the cleaned DataFrame to a new CSV file
-write.csv(selected_columns_df, 'cleaned_data.csv', row.names = FALSE)
+```
+
+
+```{r}
+# Create a scatter plot to visualize the relationship
+data_clean %>%
+  plot_ly(x = ~Percent_education, y = ~incident_rate_by_year_nta, 
+          color = ~NTA, colors = "viridis", 
+          type = "scatter", mode = "markers",
+          text = ~paste("Neighborhood: ", NTA, "<br>Borough: ", BORO, 
+                        "<br>% graduated HS: ", Percent_education, 
+                        "<br>Incident Rate: ", incident_rate_by_year_nta)) %>%
+  layout(title = "Percent graduated high school and Incident Rate in NYC",
+         xaxis = list(title = 'Percentage of People graduated in high school'),
+         yaxis = list(title = 'Incident Rate'),
+         legend = list(title = list(text = 'Neighborhood')))
+```
+
+## Education By Borough
+```{r}
+# Assuming your main data frame is named 'data_clean'
+
+# Filter data for Manhattan
+manhattan_data <- data_clean %>%
+  filter(neighbourhood_group == "Manhattan")
+
+# Filter data for Brooklyn
+brooklyn_data <- data_clean %>%
+  filter(neighbourhood_group == "Brooklyn")
+
+# Filter data for The Bronx
+bronx_data <- data_clean %>%
+  filter(neighbourhood_group == "Bronx")
+
+# Filter data for Staten Island
+staten_island_data <- data_clean %>%
+  filter(neighbourhood_group == "Staten Island")
+
+# Filter data for Queens
+queens_data <- data_clean %>%
+  filter(neighbourhood_group == "Queens")
+
+```
+
+```{r}
+# Function to compute and print correlation
+compute_correlation <- function(data, borough_name) {
+  correlation <- cor(
+    data$incident_rate_by_year_nta,
+    data$Percent_education,
+    use = "complete.obs"
+  )
+  cat("Correlation coefficient for", borough_name, ":", correlation, "\n")
+}
+
+compute_correlation(manhattan_data, "Manhattan")
+compute_correlation(brooklyn_data, "Brooklyn")
+compute_correlation(bronx_data, "Bronx")
+compute_correlation(staten_island_data, "Staten Island")
+compute_correlation(queens_data, "Queens")
+
+```
+
+### Manhattan
+```{r}
+compute_correlation(manhattan_data, "Manhattan")
+# Function to create scatter plot with trend line
+# Scatter plot for Manhattan
+data_clean |> 
+  filter(neighbourhood_group == "Manhattan") |> 
+  plot_ly(data = _, x = ~Percent_education, y = ~incident_rate_by_year_nta, 
+          color = ~NTA,
+          colors = "viridis", 
+          type = "scatter",
+          mode = "markers",
+          text = ~paste("Neighborhood: ", NTA, "<br>Borough: ", neighbourhood_group, 
+                        "<br>% graduated HS: ", Percent_education, 
+                        "<br>Incident Rate: ", incident_rate_by_year_nta)) |> 
+    layout(title = "Percent graduated high school and Incident Rate in Manhattan",
+           xaxis = list(title = 'Percentage of People graduated in high school'),
+           yaxis = list(title = 'Incident Rate'),
+           legend = list(title = list(text = 'Neighborhood')))
+
+```
+### Brooklyn
+```{r}
+# Scatter plot for Brooklyn
+data_clean |> 
+  filter(neighbourhood_group == "Brooklyn") |> 
+  plot_ly(data = _, x = ~Percent_poverty, y = ~incident_rate_by_year_nta, 
+          color = ~NTA,
+          colors = "plasma", 
+          type = "scatter",
+          mode = "markers",
+          text = ~paste("Neighborhood: ", NTA, "<br>Borough: ", neighbourhood_group, 
+                        "<br>% graduated HS: ", Percent_education, 
+                        "<br>Incident Rate: ", incident_rate_by_year_nta)) |> 
+   layout(title = "Percent graduated high school and Incident Rate in Brooklyn",
+           xaxis = list(title = 'Percentage of People graduated in high school'),
+           yaxis = list(title = 'Incident Rate'),
+           legend = list(title = list(text = 'Neighborhood')))
+
+```
+### The Bronx
+```{r}
+# Scatter plot for The Bronx
+data_clean |> 
+  filter(neighbourhood_group == "Bronx") |>
+  plot_ly(data = _, x = ~Percent_poverty, y = ~incident_rate_by_year_nta, 
+          color = ~NTA,
+          colors = "magma", 
+          type = "scatter",
+          mode = "markers",
+          text = ~paste("Neighborhood: ", NTA, "<br>Borough: ", neighbourhood_group, 
+                        "<br>% graduated HS: ", Percent_education, 
+                        "<br>Incident Rate: ", incident_rate_by_year_nta)) |> 
+   layout(title = "Percent graduated high school and Incident Rate in The Bronx",
+           xaxis = list(title = 'Percentage of People graduated in high school'),
+           yaxis = list(title = 'Incident Rate'),
+           legend = list(title = list(text = 'Neighborhood')))
+
+
+```
+### Queens
+```{r}
+# Scatter plot for Queens
+data_clean |> 
+  filter(neighbourhood_group == "Queens") |>
+  plot_ly(data = _, x = ~Percent_poverty, y = ~incident_rate_by_year_nta, 
+          color = ~NTA,
+          colors = "inferno", 
+          type = "scatter",
+          mode = "markers",
+          text = ~paste("Neighborhood: ", NTA, "<br>Borough: ", neighbourhood_group, 
+                        "<br>% graduated HS: ", Percent_education, 
+                        "<br>Incident Rate: ", incident_rate_by_year_nta)) |> 
+   layout(title = "Percent graduated high school and Incident Rate in Queens",
+           xaxis = list(title = 'Percentage of People graduated in high school'),
+           yaxis = list(title = 'Incident Rate'),
+           legend = list(title = list(text = 'Neighborhood')))
+
+```
+### Staten Island
+```{r}
+# Scatter plot for Staten Island
+data_clean |> 
+  filter(neighbourhood_group == "Staten Island") |>
+  plot_ly(data = _, x = ~Percent_poverty, y = ~incident_rate_by_year_nta, 
+          color = ~NTA,
+          colors = "inferno", 
+          type = "scatter",
+          mode = "markers",
+          text = ~paste("Neighborhood: ", NTA, "<br>Borough: ", neighbourhood_group, 
+                        "<br>% graduated HS: ", Percent_education, 
+                        "<br>Incident Rate: ", incident_rate_by_year_nta)) |> 
+   layout(title = "Percent graduated high school and Incident Rate in Queens",
+           xaxis = list(title = 'Percentage of People graduated in Staten Island'),
+           yaxis = list(title = 'Incident Rate'),
+           legend = list(title = list(text = 'Neighborhood')))
 
 ```
 

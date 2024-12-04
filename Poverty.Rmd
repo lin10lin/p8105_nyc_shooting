@@ -2,7 +2,7 @@
 title: "Poverty VS Incidence Rate"
 author: "Chenhui Yan"
 date: "2024-12-02"
-output: github_document
+output: html_document
 ---
 ```{r}
 library(dplyr)
@@ -55,7 +55,7 @@ data_clean %>%
          legend = list(title = list(text = 'Neighborhood')))
 ```
 
-this plot suggests that neighborhoods with higher poverty rates tend to have higher incident rates, with some variability. This relationship may point towards socio-economic factors that influence the safety and well-being of neighborhoods in NYC.
+this plot suggests that neighborhoods with higher poverty rates tend to have higher incident rates.
 
 ## Poverty By Borough
 ```{r}
@@ -102,6 +102,13 @@ compute_correlation(queens_data, "Queens")
 
 ```
 
+* Positive Correlation Across All Boroughs:
+ * The correlation coefficients for all boroughs are positive, indicating that as the percentage of people below the poverty line increases, the incident rate also tends to increase.
+* Differences in Correlation Strength:
+ * Brooklyn (0.5686) and Staten Island (0.5576) show the highest correlations, suggesting that the relationship between poverty and incident rate is stronger in these boroughs.
+ * Manhattan (0.3345) and Queens (0.2797) show weaker correlations, indicating that the relationship between poverty and incident rate is less pronounced in these areas.
+ * Bronx (0.4463) has a moderate correlation, which also points to a positive but not as strong relationship.
+
 ### Manhattan
 ```{r}
 compute_correlation(manhattan_data, "Manhattan")
@@ -123,6 +130,9 @@ data_clean |>
            legend = list(title = list(text = 'Neighborhood')))
 
 ```
+
+Some neighborhoods, like East Harlem (North), East Harlem (South), and Chinatown-Two Bridges, seem to have both higher poverty percentages and higher incident rates, suggesting a more direct connection between poverty and incidents.
+
 ### Brooklyn
 ```{r}
 # Scatter plot for Brooklyn
@@ -142,6 +152,9 @@ data_clean |>
            legend = list(title = list(text = 'Neighborhood')))
 
 ```
+
+Brownsville, which has a high poverty rate (between 30-50%), also has some of the highest incident rates in Brooklyn, indicating that poverty may significantly impact incident rates in this neighborhood.
+
 ### The Bronx
 ```{r}
 # Scatter plot for The Bronx
@@ -161,6 +174,9 @@ data_clean |>
            legend = list(title = list(text = 'Neighborhood')))
 
 ```
+
+Claremont Village-Claremont (East) and Fordham Heights seem to have higher incident rates compared to other neighborhoods with similar poverty levels
+
 ### Queens
 ```{r}
 # Scatter plot for Queens
@@ -180,6 +196,9 @@ data_clean |>
            legend = list(title = list(text = 'Neighborhood')))
 
 ```
+
+Corona and East Elmhurst show relatively high incident rates, particularly compared to neighborhoods with similar poverty percentages. 
+
 ### Staten Island
 ```{r}
 # Scatter plot for Staten Island
@@ -200,128 +219,5 @@ data_clean |>
 
 ```
 
-
-```{r}
-library(dplyr)
-library(plotly)
-
-
-incidents_data <- read.csv("data_final.csv")
-
-
-incidents_filtered <- incidents_data %>%
-  filter(Year >= 2017 & Year <= 2023)
-
-# Aggregate total incidents by CDTA
-incidents_by_cdta <- incidents_filtered %>%
-  group_by(CDTA) %>%
-  summarise(
-    total_incidents = n(),
-    # Calculate average Longitude and Latitude for each CDTA
-    Longitude = mean(Longitude, na.rm = TRUE),
-    Latitude = mean(Latitude, na.rm = TRUE)
-  ) %>%
-  ungroup()
-
-# Define initial breaks from 0 to 400 with intervals of 5
-initial_breaks <- seq(0, 400, by = 5)
-
-
-max_incidents <- max(incidents_by_cdta$total_incidents, na.rm = TRUE)
-
-
-if (max_incidents > 400) {
-  # Extend breaks to include all incidents > 400
-  extended_breaks <- c(initial_breaks, Inf)
-  
-  # Create labels for all intervals, including the last one for incidents >400
-  labels <- c(
-    paste(initial_breaks[-length(initial_breaks)], initial_breaks[-1], sep = "-"),
-    paste0("401+", max_incidents)
-  )
-} else {
-  
-  extended_breaks <- initial_breaks
-  labels <- paste(initial_breaks[-length(initial_breaks)], initial_breaks[-1], sep = "-")
-}
-
-# Validate that the number of labels matches the number of intervals
-num_intervals <- length(extended_breaks) - 1
-num_labels <- length(labels)
-
-if (num_intervals != num_labels) {
-  stop("Number of labels does not match the number of intervals.")
-}
-
-# Assign incident ranges
-incidents_by_cdta <- incidents_by_cdta %>%
-  mutate(
-    incident_range = cut(
-      total_incidents,
-      breaks = extended_breaks,
-      include.lowest = TRUE,
-      right = FALSE,  # Left-inclusive intervals [a, b)
-      labels = labels
-    )
-  )
-
-
-print(table(incidents_by_cdta$incident_range, useNA = "ifany"))
-
-# Check for missing coordinates and exclude them
-missing_coords <- incidents_by_cdta %>%
-  filter(is.na(Longitude) | is.na(Latitude))
-
-if (nrow(missing_coords) > 0) {
-  cat("Warning: The following CDTAs have missing coordinates and will be excluded from the plot:\n")
-  print(missing_coords$CDTA)
-  
-  # Exclude CDTAs with missing coordinates
-  incidents_by_cdta <- incidents_by_cdta %>%
-    filter(!is.na(Longitude) & !is.na(Latitude))
-}
-
-
-# Replace 'your_mapbox_access_token' with your actual token from Mapbox
-Sys.setenv('MAPBOX_TOKEN' = 'your_mapbox_access_token')  # IMPORTANT: Replace with your token
-
-# Create the scatter map
-incident_map <- plot_ly(
-  data = incidents_by_cdta,
-  type = "scattermapbox",
-  mode = "markers",
-  lon = ~Longitude,  # Use exact column name
-  lat = ~Latitude,   # Use exact column name
-  color = ~incident_range,
-  colors = "inferno",  # Choose a valid color scale
-  marker = list(
-    size = 8,
-    opacity = 0.7
-  ),
-  text = ~paste(
-    "CDTA: ", CDTA,
-    "<br>Total Incidents: ", total_incidents,
-    "<br>Incident Range: ", incident_range
-  )
-) %>%
-  layout(
-    title = "Total Number of Incidents Across NYC CDTAs (2017-2023)",
-    mapbox = list(
-      style = "carto-positron",  # Map style
-      center = list(lon = -74.0060, lat = 40.7128),  # Centered on NYC
-      zoom = 10
-    ),
-    legend = list(title = list(text = 'Incident Range'))
-  )
-
-
-incident_map
-
-```
-
-
-
-
-
-
+In Staten Island, the relationship between poverty and incident rates is less pronounced compared to other boroughs. 
 
