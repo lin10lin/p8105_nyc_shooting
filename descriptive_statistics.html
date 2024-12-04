@@ -828,129 +828,6 @@ kable(top_10_nta_overall, digits = 2, caption = &quot;Top 10 NTAs with the Highe
 </tbody>
 </table>
 </div>
-<div id="manhattan-1" class="section level4">
-<h4>MANHATTAN</h4>
-<pre class="r"><code># Table showing Top 10 NTAs with the Highest Total Shooting Incidents in MANHATTAN
-top_10_nta_overall &lt;- df_descriptive %&gt;%
-  filter(BORO == &#39;MANHATTAN&#39;) %&gt;% 
-  group_by(BORO, NTA) %&gt;%
-  summarise(total_incidents = n(),
-            total_population = first(Total_population_nta),
-            percent_poverty = first(Percent_poverty),
-            percent_education = first(Percent_education)) %&gt;%
-  arrange(desc(total_incidents)) %&gt;%
-  ungroup() %&gt;%
-  slice(1:10) %&gt;%
-  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)</code></pre>
-<pre><code>## `summarise()` has grouped output by &#39;BORO&#39;. You can override using the
-## `.groups` argument.</code></pre>
-<pre class="r"><code># Display the table in the desired format
-kable(top_10_nta_overall, digits = 2, caption = &quot;Top 10 NTAs with the Highest Total Shooting Incidents in MANHATTAN&quot;)</code></pre>
-<table>
-<caption>Top 10 NTAs with the Highest Total Shooting Incidents in
-MANHATTAN</caption>
-<colgroup>
-<col width="9%" />
-<col width="26%" />
-<col width="15%" />
-<col width="16%" />
-<col width="15%" />
-<col width="17%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="left">BORO</th>
-<th align="left">NTA</th>
-<th align="right">total_incidents</th>
-<th align="right">total_population</th>
-<th align="right">percent_poverty</th>
-<th align="right">percent_education</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">MANHATTAN</td>
-<td align="left">Harlem (North)</td>
-<td align="right">253</td>
-<td align="right">83327</td>
-<td align="right">25.1</td>
-<td align="right">82.9</td>
-</tr>
-<tr class="even">
-<td align="left">MANHATTAN</td>
-<td align="left">East Harlem (North)</td>
-<td align="right">229</td>
-<td align="right">64655</td>
-<td align="right">32.3</td>
-<td align="right">75.9</td>
-</tr>
-<tr class="odd">
-<td align="left">MANHATTAN</td>
-<td align="left">East Harlem (South)</td>
-<td align="right">145</td>
-<td align="right">59814</td>
-<td align="right">29.0</td>
-<td align="right">78.3</td>
-</tr>
-<tr class="even">
-<td align="left">MANHATTAN</td>
-<td align="left">Harlem (South)</td>
-<td align="right">130</td>
-<td align="right">47113</td>
-<td align="right">18.8</td>
-<td align="right">87.4</td>
-</tr>
-<tr class="odd">
-<td align="left">MANHATTAN</td>
-<td align="left">Inwood</td>
-<td align="right">105</td>
-<td align="right">36299</td>
-<td align="right">15.3</td>
-<td align="right">77.0</td>
-</tr>
-<tr class="even">
-<td align="left">MANHATTAN</td>
-<td align="left">Washington Heights (South)</td>
-<td align="right">88</td>
-<td align="right">72037</td>
-<td align="right">19.9</td>
-<td align="right">70.3</td>
-</tr>
-<tr class="odd">
-<td align="left">MANHATTAN</td>
-<td align="left">Washington Heights (North)</td>
-<td align="right">67</td>
-<td align="right">71842</td>
-<td align="right">14.8</td>
-<td align="right">79.3</td>
-</tr>
-<tr class="even">
-<td align="left">MANHATTAN</td>
-<td align="left">Hamilton Heights-Sugar Hill</td>
-<td align="right">54</td>
-<td align="right">49410</td>
-<td align="right">24.0</td>
-<td align="right">78.6</td>
-</tr>
-<tr class="odd">
-<td align="left">MANHATTAN</td>
-<td align="left">Manhattanville-West Harlem</td>
-<td align="right">46</td>
-<td align="right">22183</td>
-<td align="right">26.7</td>
-<td align="right">77.4</td>
-</tr>
-<tr class="even">
-<td align="left">MANHATTAN</td>
-<td align="left">East Village</td>
-<td align="right">41</td>
-<td align="right">71436</td>
-<td align="right">24.3</td>
-<td align="right">87.7</td>
-</tr>
-</tbody>
-</table>
-</div>
 <div id="brooklyn" class="section level4">
 <h4>BROOKLYN</h4>
 <pre class="r"><code># Table showing Top 10 NTAs with the Highest Total Shooting Incidents in BROOKLYN
@@ -1461,10 +1338,10 @@ top_10_nta_incident_rate &lt;- top_10_incident_rate %&gt;%
          percent_education = Percent_education)
 
 # Display the table in the desired format
-kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in Each Borough, Including Population, Poverty, and Education Data&quot;)</code></pre>
+kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in Each Boroug&quot;)</code></pre>
 <table>
 <caption>Top 10 NTAs with the Highest Incident Rate by Year in Each
-Borough, Including Population, Poverty, and Education Data</caption>
+Boroug</caption>
 <colgroup>
 <col width="31%" />
 <col width="9%" />
@@ -1566,6 +1443,626 @@ Borough, Including Population, Poverty, and Education Data</caption>
 </tr>
 </tbody>
 </table>
+<div id="manhattan-1" class="section level4">
+<h4>MANHATTAN</h4>
+<pre class="r"><code># Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate &lt;- df_descriptive %&gt;%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %&gt;%
+  filter(BORO == &#39;MANHATTAN&#39;) %&gt;% 
+  filter(NTAType == &#39;Residential&#39;) %&gt;%
+  arrange(desc(incident_rate_by_year_nta)) %&gt;%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate &lt;- top_10_incident_rate %&gt;%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in MANHATTAN&quot;)</code></pre>
+<table>
+<caption>Top 10 NTAs with the Highest Incident Rate by Year in
+MANHATTAN</caption>
+<colgroup>
+<col width="21%" />
+<col width="10%" />
+<col width="14%" />
+<col width="17%" />
+<col width="16%" />
+<col width="18%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">NTA</th>
+<th align="left">BORO</th>
+<th align="right">incident_rate</th>
+<th align="right">total_population</th>
+<th align="right">percent_poverty</th>
+<th align="right">percent_education</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Inwood</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.115706</td>
+<td align="right">36299</td>
+<td align="right">15.3</td>
+<td align="right">77.0</td>
+</tr>
+<tr class="even">
+<td align="left">East Harlem (North)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.086614</td>
+<td align="right">64655</td>
+<td align="right">32.3</td>
+<td align="right">75.9</td>
+</tr>
+<tr class="odd">
+<td align="left">Harlem (North)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.080406</td>
+<td align="right">83327</td>
+<td align="right">25.1</td>
+<td align="right">82.9</td>
+</tr>
+<tr class="even">
+<td align="left">Inwood</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.068872</td>
+<td align="right">36299</td>
+<td align="right">15.3</td>
+<td align="right">77.0</td>
+</tr>
+<tr class="odd">
+<td align="left">Harlem (South)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.065799</td>
+<td align="right">47113</td>
+<td align="right">18.8</td>
+<td align="right">87.4</td>
+</tr>
+<tr class="even">
+<td align="left">Harlem (North)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.064805</td>
+<td align="right">83327</td>
+<td align="right">25.1</td>
+<td align="right">82.9</td>
+</tr>
+<tr class="odd">
+<td align="left">East Harlem (North)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.061867</td>
+<td align="right">64655</td>
+<td align="right">32.3</td>
+<td align="right">75.9</td>
+</tr>
+<tr class="even">
+<td align="left">Harlem (South)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.057309</td>
+<td align="right">47113</td>
+<td align="right">18.8</td>
+<td align="right">87.4</td>
+</tr>
+<tr class="odd">
+<td align="left">Harlem (North)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.055204</td>
+<td align="right">83327</td>
+<td align="right">25.1</td>
+<td align="right">82.9</td>
+</tr>
+<tr class="even">
+<td align="left">East Harlem (South)</td>
+<td align="left">MANHATTAN</td>
+<td align="right">0.055171</td>
+<td align="right">59814</td>
+<td align="right">29.0</td>
+<td align="right">78.3</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="brooklyn-1" class="section level4">
+<h4>BROOKLYN</h4>
+<pre class="r"><code># Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate &lt;- df_descriptive %&gt;%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %&gt;%
+  filter(BORO == &#39;BROOKLYN&#39;) %&gt;% 
+  filter(NTAType == &#39;Residential&#39;) %&gt;%
+  arrange(desc(incident_rate_by_year_nta)) %&gt;%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate &lt;- top_10_incident_rate %&gt;%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in BROOKLYN&quot;)</code></pre>
+<table>
+<caption>Top 10 NTAs with the Highest Incident Rate by Year in
+BROOKLYN</caption>
+<colgroup>
+<col width="28%" />
+<col width="8%" />
+<col width="13%" />
+<col width="16%" />
+<col width="15%" />
+<col width="17%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">NTA</th>
+<th align="left">BORO</th>
+<th align="right">incident_rate</th>
+<th align="right">total_population</th>
+<th align="right">percent_poverty</th>
+<th align="right">percent_education</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Brownsville</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.153795</td>
+<td align="right">60470</td>
+<td align="right">37.2</td>
+<td align="right">76.9</td>
+</tr>
+<tr class="even">
+<td align="left">East New York-New Lots</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.107539</td>
+<td align="right">53004</td>
+<td align="right">25.3</td>
+<td align="right">82.6</td>
+</tr>
+<tr class="odd">
+<td align="left">Brownsville</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.099223</td>
+<td align="right">60470</td>
+<td align="right">37.2</td>
+<td align="right">76.9</td>
+</tr>
+<tr class="even">
+<td align="left">Brownsville</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.097569</td>
+<td align="right">60470</td>
+<td align="right">37.2</td>
+<td align="right">76.9</td>
+</tr>
+<tr class="odd">
+<td align="left">Bedford-Stuyvesant (East)</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.088597</td>
+<td align="right">84653</td>
+<td align="right">22.2</td>
+<td align="right">87.8</td>
+</tr>
+<tr class="even">
+<td align="left">East New York (North)</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.079406</td>
+<td align="right">42818</td>
+<td align="right">25.5</td>
+<td align="right">79.4</td>
+</tr>
+<tr class="odd">
+<td align="left">East New York-New Lots</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.079239</td>
+<td align="right">53004</td>
+<td align="right">25.3</td>
+<td align="right">82.6</td>
+</tr>
+<tr class="even">
+<td align="left">East Flatbush-Remsen Village</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.071584</td>
+<td align="right">39115</td>
+<td align="right">18.7</td>
+<td align="right">83.7</td>
+</tr>
+<tr class="odd">
+<td align="left">Ocean Hill</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.071142</td>
+<td align="right">37952</td>
+<td align="right">27.3</td>
+<td align="right">83.1</td>
+</tr>
+<tr class="even">
+<td align="left">Brownsville</td>
+<td align="left">BROOKLYN</td>
+<td align="right">0.069456</td>
+<td align="right">60470</td>
+<td align="right">37.2</td>
+<td align="right">76.9</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="bronx-1" class="section level4">
+<h4>BRONX</h4>
+<pre class="r"><code># Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate &lt;- df_descriptive %&gt;%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %&gt;%
+  filter(BORO == &#39;BRONX&#39;) %&gt;% 
+  filter(NTAType == &#39;Residential&#39;) %&gt;%
+  arrange(desc(incident_rate_by_year_nta)) %&gt;%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate &lt;- top_10_incident_rate %&gt;%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in BRONX&quot;)</code></pre>
+<table style="width:100%;">
+<caption>Top 10 NTAs with the Highest Incident Rate by Year in
+BRONX</caption>
+<colgroup>
+<col width="33%" />
+<col width="5%" />
+<col width="13%" />
+<col width="16%" />
+<col width="15%" />
+<col width="16%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">NTA</th>
+<th align="left">BORO</th>
+<th align="right">incident_rate</th>
+<th align="right">total_population</th>
+<th align="right">percent_poverty</th>
+<th align="right">percent_education</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Claremont Village-Claremont (East)</td>
+<td align="left">BRONX</td>
+<td align="right">0.187350</td>
+<td align="right">24553</td>
+<td align="right">43.2</td>
+<td align="right">61.7</td>
+</tr>
+<tr class="even">
+<td align="left">Tremont</td>
+<td align="left">BRONX</td>
+<td align="right">0.118196</td>
+<td align="right">32150</td>
+<td align="right">36.3</td>
+<td align="right">71.4</td>
+</tr>
+<tr class="odd">
+<td align="left">Hunts Point</td>
+<td align="left">BRONX</td>
+<td align="right">0.105743</td>
+<td align="right">15131</td>
+<td align="right">34.3</td>
+<td align="right">72.2</td>
+</tr>
+<tr class="even">
+<td align="left">Mount Eden-Claremont (West)</td>
+<td align="left">BRONX</td>
+<td align="right">0.100703</td>
+<td align="right">49651</td>
+<td align="right">31.8</td>
+<td align="right">67.9</td>
+</tr>
+<tr class="odd">
+<td align="left">Tremont</td>
+<td align="left">BRONX</td>
+<td align="right">0.096423</td>
+<td align="right">32150</td>
+<td align="right">36.3</td>
+<td align="right">71.4</td>
+</tr>
+<tr class="even">
+<td align="left">West Farms</td>
+<td align="left">BRONX</td>
+<td align="right">0.094307</td>
+<td align="right">20147</td>
+<td align="right">44.8</td>
+<td align="right">61.1</td>
+</tr>
+<tr class="odd">
+<td align="left">Longwood</td>
+<td align="left">BRONX</td>
+<td align="right">0.091836</td>
+<td align="right">40289</td>
+<td align="right">32.0</td>
+<td align="right">66.9</td>
+</tr>
+<tr class="even">
+<td align="left">Mount Hope</td>
+<td align="left">BRONX</td>
+<td align="right">0.089615</td>
+<td align="right">49099</td>
+<td align="right">30.2</td>
+<td align="right">66.8</td>
+</tr>
+<tr class="odd">
+<td align="left">West Farms</td>
+<td align="left">BRONX</td>
+<td align="right">0.084380</td>
+<td align="right">20147</td>
+<td align="right">44.8</td>
+<td align="right">61.1</td>
+</tr>
+<tr class="even">
+<td align="left">Morrisania</td>
+<td align="left">BRONX</td>
+<td align="right">0.082431</td>
+<td align="right">37607</td>
+<td align="right">35.7</td>
+<td align="right">65.9</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="queens-1" class="section level4">
+<h4>QUEENS</h4>
+<pre class="r"><code># Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate &lt;- df_descriptive %&gt;%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %&gt;%
+  filter(BORO == &#39;QUEENS&#39;) %&gt;% 
+  filter(NTAType == &#39;Residential&#39;) %&gt;%
+  arrange(desc(incident_rate_by_year_nta)) %&gt;%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate &lt;- top_10_incident_rate %&gt;%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in QUEENS&quot;)</code></pre>
+<table>
+<caption>Top 10 NTAs with the Highest Incident Rate by Year in
+QUEENS</caption>
+<colgroup>
+<col width="33%" />
+<col width="6%" />
+<col width="12%" />
+<col width="15%" />
+<col width="14%" />
+<col width="16%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">NTA</th>
+<th align="left">BORO</th>
+<th align="right">incident_rate</th>
+<th align="right">total_population</th>
+<th align="right">percent_poverty</th>
+<th align="right">percent_education</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">South Jamaica</td>
+<td align="left">QUEENS</td>
+<td align="right">0.069818</td>
+<td align="right">44401</td>
+<td align="right">13.4</td>
+<td align="right">78.9</td>
+</tr>
+<tr class="even">
+<td align="left">Rockaway Beach-Arverne-Edgemere</td>
+<td align="left">QUEENS</td>
+<td align="right">0.067687</td>
+<td align="right">41367</td>
+<td align="right">22.1</td>
+<td align="right">82.1</td>
+</tr>
+<tr class="odd">
+<td align="left">Far Rockaway-Bayswater</td>
+<td align="left">QUEENS</td>
+<td align="right">0.064793</td>
+<td align="right">58648</td>
+<td align="right">18.3</td>
+<td align="right">79.9</td>
+</tr>
+<tr class="even">
+<td align="left">Queensbridge-Ravenswood-Dutch Kills</td>
+<td align="left">QUEENS</td>
+<td align="right">0.054622</td>
+<td align="right">32954</td>
+<td align="right">16.5</td>
+<td align="right">85.0</td>
+</tr>
+<tr class="odd">
+<td align="left">Laurelton</td>
+<td align="left">QUEENS</td>
+<td align="right">0.053665</td>
+<td align="right">26088</td>
+<td align="right">5.4</td>
+<td align="right">91.2</td>
+</tr>
+<tr class="even">
+<td align="left">Rockaway Beach-Arverne-Edgemere</td>
+<td align="left">QUEENS</td>
+<td align="right">0.050765</td>
+<td align="right">41367</td>
+<td align="right">22.1</td>
+<td align="right">82.1</td>
+</tr>
+<tr class="odd">
+<td align="left">Richmond Hill</td>
+<td align="left">QUEENS</td>
+<td align="right">0.046921</td>
+<td align="right">34100</td>
+<td align="right">10.6</td>
+<td align="right">79.8</td>
+</tr>
+<tr class="even">
+<td align="left">Queensbridge-Ravenswood-Dutch Kills</td>
+<td align="left">QUEENS</td>
+<td align="right">0.045518</td>
+<td align="right">32954</td>
+<td align="right">16.5</td>
+<td align="right">85.0</td>
+</tr>
+<tr class="odd">
+<td align="left">St. Albans</td>
+<td align="left">QUEENS</td>
+<td align="right">0.044388</td>
+<td align="right">51816</td>
+<td align="right">8.6</td>
+<td align="right">88.8</td>
+</tr>
+<tr class="even">
+<td align="left">Richmond Hill</td>
+<td align="left">QUEENS</td>
+<td align="right">0.043988</td>
+<td align="right">34100</td>
+<td align="right">10.6</td>
+<td align="right">79.8</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="staten-island-1" class="section level4">
+<h4>STATEN ISLAND</h4>
+<pre class="r"><code># Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate &lt;- df_descriptive %&gt;%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %&gt;%
+  filter(BORO == &#39;STATEN ISLAND&#39;) %&gt;% 
+  filter(NTAType == &#39;Residential&#39;) %&gt;%
+  arrange(desc(incident_rate_by_year_nta)) %&gt;%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate &lt;- top_10_incident_rate %&gt;%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = &quot;Top 10 NTAs with the Highest Incident Rate by Year in STATEN ISLAND&quot;)</code></pre>
+<table>
+<caption>Top 10 NTAs with the Highest Incident Rate by Year in STATEN
+ISLAND</caption>
+<colgroup>
+<col width="34%" />
+<col width="11%" />
+<col width="11%" />
+<col width="14%" />
+<col width="13%" />
+<col width="14%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">NTA</th>
+<th align="left">BORO</th>
+<th align="right">incident_rate</th>
+<th align="right">total_population</th>
+<th align="right">percent_poverty</th>
+<th align="right">percent_education</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">St. George-New Brighton</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.058397</td>
+<td align="right">20549</td>
+<td align="right">18.5</td>
+<td align="right">79.9</td>
+</tr>
+<tr class="even">
+<td align="left">Tompkinsville-Stapleton-Clifton-Fox Hills</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.052557</td>
+<td align="right">19027</td>
+<td align="right">25.5</td>
+<td align="right">79.2</td>
+</tr>
+<tr class="odd">
+<td align="left">Mariner’s Harbor-Arlington-Graniteville</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.047773</td>
+<td align="right">33492</td>
+<td align="right">16.8</td>
+<td align="right">83.3</td>
+</tr>
+<tr class="even">
+<td align="left">Port Richmond</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.044230</td>
+<td align="right">22609</td>
+<td align="right">22.0</td>
+<td align="right">83.2</td>
+</tr>
+<tr class="odd">
+<td align="left">St. George-New Brighton</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.043798</td>
+<td align="right">20549</td>
+<td align="right">18.5</td>
+<td align="right">79.9</td>
+</tr>
+<tr class="even">
+<td align="left">St. George-New Brighton</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.038931</td>
+<td align="right">20549</td>
+<td align="right">18.5</td>
+<td align="right">79.9</td>
+</tr>
+<tr class="odd">
+<td align="left">Mariner’s Harbor-Arlington-Graniteville</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.038815</td>
+<td align="right">33492</td>
+<td align="right">16.8</td>
+<td align="right">83.3</td>
+</tr>
+<tr class="even">
+<td align="left">Tompkinsville-Stapleton-Clifton-Fox Hills</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.036790</td>
+<td align="right">19027</td>
+<td align="right">25.5</td>
+<td align="right">79.2</td>
+</tr>
+<tr class="odd">
+<td align="left">Rosebank-Shore Acres-Park Hill</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.035280</td>
+<td align="right">25510</td>
+<td align="right">14.4</td>
+<td align="right">81.7</td>
+</tr>
+<tr class="even">
+<td align="left">St. George-New Brighton</td>
+<td align="left">STATEN ISLAND</td>
+<td align="right">0.034065</td>
+<td align="right">20549</td>
+<td align="right">18.5</td>
+<td align="right">79.9</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 <div id="victim" class="section level2">

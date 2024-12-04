@@ -157,26 +157,6 @@ top_10_nta_overall <- df_descriptive %>%
 kable(top_10_nta_overall, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents")
 ```
 
-#### MANHATTAN
-
-```{r}
-
-# Table showing Top 10 NTAs with the Highest Total Shooting Incidents in MANHATTAN
-top_10_nta_overall <- df_descriptive %>%
-  filter(BORO == 'MANHATTAN') %>% 
-  group_by(BORO, NTA) %>%
-  summarise(total_incidents = n(),
-            total_population = first(Total_population_nta),
-            percent_poverty = first(Percent_poverty),
-            percent_education = first(Percent_education)) %>%
-  arrange(desc(total_incidents)) %>%
-  ungroup() %>%
-  slice(1:10) %>%
-  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
-# Display the table in the desired format
-kable(top_10_nta_overall, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents in MANHATTAN")
-```
-
 #### BROOKLYN
 
 ```{r}
@@ -275,7 +255,117 @@ top_10_nta_incident_rate <- top_10_incident_rate %>%
          percent_education = Percent_education)
 
 # Display the table in the desired format
-kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in Each Borough, Including Population, Poverty, and Education Data")
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in Each Boroug")
+```
+
+#### MANHATTAN
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'MANHATTAN') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in MANHATTAN")
+```
+
+#### BROOKLYN
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'BROOKLYN') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in BROOKLYN")
+```
+
+#### BRONX
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'BRONX') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in BRONX")
+```
+
+#### QUEENS
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'QUEENS') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in QUEENS")
+```
+
+#### STATEN ISLAND
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'STATEN ISLAND') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in STATEN ISLAND")
 ```
 
 ## victim
