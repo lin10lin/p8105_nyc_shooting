@@ -129,6 +129,31 @@ nta_shape <- st_read("nynta2020_24d/nynta2020.shp")
     ## Projected CRS: NAD83 / New York Long Island (ftUS)
 
 ``` r
+cdta_shape = st_read("nycdta2020_24d/nycdta2020.shp")
+```
+
+    ## Reading layer `nycdta2020' from data source 
+    ##   `/Users/wangmingyin/Desktop/data science 1/nyc_shooting_final/nycdta2020_24d/nycdta2020.shp' 
+    ##   using driver `ESRI Shapefile'
+    ## Simple feature collection with 71 features and 8 fields
+    ## Geometry type: MULTIPOLYGON
+    ## Dimension:     XY
+    ## Bounding box:  xmin: 913175.1 ymin: 120128.4 xmax: 1067383 ymax: 272844.3
+    ## Projected CRS: NAD83 / New York Long Island (ftUS)
+
+``` r
+boro_shape = st_read("Borough Boundaries/geo_export_391a75ed-0ae4-4c88-8c30-3588c75bd01e.shp")
+```
+
+    ## Reading layer `geo_export_391a75ed-0ae4-4c88-8c30-3588c75bd01e' from data source `/Users/wangmingyin/Desktop/data science 1/nyc_shooting_final/Borough Boundaries/geo_export_391a75ed-0ae4-4c88-8c30-3588c75bd01e.shp' 
+    ##   using driver `ESRI Shapefile'
+    ## Simple feature collection with 5 features and 4 fields
+    ## Geometry type: MULTIPOLYGON
+    ## Dimension:     XY
+    ## Bounding box:  xmin: -74.25559 ymin: 40.49613 xmax: -73.70001 ymax: 40.91553
+    ## Geodetic CRS:  WGS84(DD)
+
+``` r
 # Prepare incident data: count incidents per NTA_clean
 nta_incident_counts <- data_final %>%
   group_by(NTA) %>%
@@ -180,3 +205,124 @@ ggplot(data = nta_map_data) +
 ```
 
 ![](boro_nta_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+summarize CDTA and BORO
+
+``` r
+## There is space between letter and number in CDTA, I deleted the space below
+data_final$CDTA <- gsub(" ", "", data_final$CDTA)
+
+cdta_incident_counts <- data_final %>%
+  group_by(CDTA) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+```
+
+merge datasets
+
+``` r
+# Prepare incident data: count incidents per NTA_clean
+cdta_incident_counts <- data_final %>%
+  group_by(CDTA) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+
+# Merge spatial data with incident counts
+cdta_map_data <- cdta_shape %>%
+  left_join(cdta_incident_counts, by = c("CDTA2020" = "CDTA"))
+
+# Create custom breaks for Number_of_Incidents
+cdta_map_data <- cdta_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 400, by = 80),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-80", "81-160", "161-240", "241-320", "321-400"),
+      include.lowest = TRUE
+    )
+  )
+```
+
+``` r
+# Plot the map with custom ranges
+ggplot(data = cdta_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  scale_fill_manual(
+    values = c(
+      "0-80" = "#b2e2e2",
+      "81-160" = "skyblue",
+      "161-240" = "#66c2a4",
+      "241-320" = "#2ca25f",
+      "321-400" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC CDTAs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-400, 80 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+![](boro_nta_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+# Count the boro incident
+boro_incident_counts <- data_final %>%
+  group_by(BORO) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")  %>%
+  mutate(BORO = tolower(BORO) )
+
+# Lowercase the boro in boro_shape
+boro_shape = boro_shape %>%
+  mutate(boro_name = tolower(boro_name))
+ 
+
+# Merge spatial data with incident counts
+boro_map_data <- boro_shape %>%
+  left_join(boro_incident_counts, by = c("boro_name" = "BORO"))
+
+# Create custom breaks for Number_of_Incidents
+boro_map_data <- boro_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 4000, by = 800),  # Breaks from 0 to 4000, every 800 cases
+      labels = c("0-800", "801-1600", "1601-2400", "2401-3200", "3201-4000"),
+      include.lowest = TRUE
+    )
+  )
+```
+
+``` r
+# Plot the map with custom ranges
+ggplot(data = boro_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  scale_fill_manual(
+    values = c(
+      "0-800" = "#b2e2e2",
+      "801-1600" = "skyblue",
+      "1601-2400" = "#66c2a4",
+      "2401-3200" = "#2ca25f",
+      "3201-4000" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC BOROs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-4000, 800 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+![](boro_nta_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
