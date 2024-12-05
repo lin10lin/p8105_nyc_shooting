@@ -1,0 +1,150 @@
+---
+title: "NYC Shooting Incident Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(viridis)
+library(DT)
+library(plotly)
+library(shiny)
+library(forcats)
+```
+
+```{r}
+df=read_csv("data_final.csv")
+```
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+boroughs = df |> 
+  filter(!is.na(neighbourhood_group)) |> 
+  distinct(neighbourhood_group) |> 
+  pull()
+ 
+# selectInput widget
+selectInput(
+  "borough_choice", 
+  label = h3("Choose borough"),  
+  choices = boroughs, selected = "Manhattan")
+```
+
+```{r}
+year = df |> distinct(Year) |> arrange(desc(Year)) |> pull()
+
+# radioButtons widget
+radioButtons(
+  "year_choice", 
+  label = h3("Choose year"),
+  choices = year, selected = "2022")
+```
+
+Column {data-width=600}
+-----------------------------------------------------------------------
+
+### Incident distribution on NYC map
+
+```{r}
+Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoiZWR3YXJkenp6IiwiYSI6ImNtNDkwMzZ3YTA1MGIyanE1ZjdlNTZodjcifQ.BsLSffH3a0z5Xqf1Tqc4ag') 
+
+renderPlotly({
+  incidents_filtered <- df %>%
+    filter(neighbourhood_group == input[["borough_choice"]],
+         Year == input[["year_choice"]]) %>%
+    drop_na(Sky_Is_Dark, Longitude, Latitude, NTA, OCCUR_TIME,OCCUR_DATE) |>
+    mutate(Sky_Condition = ifelse(Sky_Is_Dark, "Night", "Day"))
+  
+  plot_ly(data = incidents_filtered, 
+          type = "scattermapbox",       
+          mode = "markers",             
+          lon = ~Longitude,             
+          lat = ~Latitude,              
+          color = ~Sky_Condition,       
+          colors = c("Day" = "orange", "Night" = "blue"), 
+          marker = list(size = 5, opacity = 0.7),  
+          text = ~paste("NTA:", NTA,
+                        "<br>Date of Incident:", OCCUR_DATE,
+                        "<br>Time of Incident:", OCCUR_TIME,
+                        "<br>Sky Condition:", Sky_Condition)) |> 
+    layout(
+      mapbox = list(
+        style = "carto-positron",      
+        center = list(lon = -73.90, lat = 40.7),  
+        zoom = 9.5                    
+      ),
+      showlegend = TRUE,               
+      legend = list(title = list(text = 'Sky Condition')))
+})
+```
+
+Column {data-width=400}
+-----------------------------------------------------------------------
+
+### NTA Incident rate by Borough and Year
+
+```{r}
+renderDataTable({
+  df |>
+    filter(
+      neighbourhood_group == input[["borough_choice"]], 
+      Year == input[["year_choice"]],
+      NTAType == "Residential") |>
+    select(neighbourhood_group,Year, NTA,incident_rate_by_year_nta) |>
+    distinct() |>
+    rename(
+      Borough = neighbourhood_group,
+      Incident_rate = incident_rate_by_year_nta
+    ) |>
+    arrange(desc(Incident_rate)) |>
+    mutate(Incident_rate = signif(Incident_rate, 3)) |>
+    datatable(options = list(pageLength = 5, autoWidth = TRUE)) 
+})
+```
+
+### Top NTAs by Incident Rate
+
+```{r}
+renderPlotly({
+  df_filtered <- df |>
+    filter(
+      neighbourhood_group == input[["borough_choice"]],
+      Year == input[["year_choice"]],
+      NTAType == "Residential"
+    ) |>
+    select(neighbourhood_group, Year, NTA, incident_rate_by_year_nta) |>
+    distinct() |>
+    rename(
+      Borough = neighbourhood_group,
+      Incident_rate = incident_rate_by_year_nta
+    ) |>
+    mutate(Incident_rate = signif(Incident_rate, 3)) |>  
+    arrange(desc(Incident_rate)) |>
+    head(10) |>
+    mutate(NTA = fct_reorder(NTA, Incident_rate, .desc = TRUE)) 
+
+  plot_ly(
+    data = df_filtered,
+    x = ~NTA,
+    y = ~Incident_rate,
+    type = 'bar',
+    color = ~NTA,
+    colors = "viridis"
+  ) |>
+    layout(
+      xaxis = list(
+        title = "NTA",
+        showticklabels = FALSE
+      ),
+      yaxis = list(title = "Incident Rate")
+    )
+})
+```
+

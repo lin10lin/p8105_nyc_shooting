@@ -1,0 +1,418 @@
+---
+title: "descriptive_statistics"
+output: html_document
+date: "2024-12-03"
+---
+
+# Descriptive Statistics of NYC Shooting Data
+```{r}
+library(ggplot2)
+library(readxl)
+library(readr)
+library(dplyr)
+library(knitr)
+library(tidyr)
+```
+
+
+```{r}
+# Load the dataset
+df_descriptive=read_csv("data_final.csv")
+```
+## time
+
+### Plotting the line chart for shooting incidents over time
+
+```{r}
+# Converting OCCUR_DATE to Date type
+df_descriptive$OCCUR_DATE <- as.Date(df_descriptive$OCCUR_DATE, format = "%Y-%m-%d")
+
+# Grouping the data by date to count the number of incidents
+date_counts <- as.data.frame(table(df_descriptive$OCCUR_DATE))
+colnames(date_counts) <- c('Date', 'Count')
+date_counts$Date <- as.Date(date_counts$Date)
+
+# Plotting the line chart for shooting incidents over time
+ggplot(date_counts, aes(x = Date, y = Count)) +
+  geom_line(color = 'blue') +
+  labs(title = 'Shooting Incidents Over Time in NYC',
+       x = 'Date',
+       y = 'Number of Shooting Incidents') +
+  theme_minimal()
+```
+
+### Plotting the line chart for shooting incidents by year with data points labeled
+
+```{r}
+# Grouping the data by year to count the number of incidents
+df_descriptive$Year <- as.factor(df_descriptive$Year)
+year_counts <- as.data.frame(table(df_descriptive$Year))
+colnames(year_counts) <- c('Year', 'Count')
+
+
+# Plotting the line chart for shooting incidents by year with data points labeled
+ggplot(year_counts, aes(x = Year, y = Count, group = 1)) +
+  geom_line(color = 'blue') +
+  geom_point(size = 3) +
+  geom_text(aes(label = Count), vjust = -0.5, size = 3) +
+  labs(title = 'Shooting Incidents by Year in NYC',
+       x = 'Year',
+       y = 'Number of Shooting Incidents') +
+  theme_minimal()
+```
+
+### Plotting the bar chart for shooting incidents by month
+
+```{r}
+# Grouping the data by month
+df_descriptive$Month <- as.factor(df_descriptive$Month)
+month_counts <- as.data.frame(table(df_descriptive$Month))
+colnames(month_counts) <- c('Month', 'Count')
+
+# Plotting the bar chart for shooting incidents by month
+ggplot(month_counts, aes(x = Month, y = Count)) +
+  geom_bar(stat = 'identity', fill = 'skyblue') +
+  geom_text(aes(label = Count), vjust = -0.5) +
+  labs(title = 'Bar Chart of Shooting Incidents by Month in NYC',
+       x = 'Month',
+       y = 'Number of Shooting Incidents') +
+  theme_minimal()
+```
+
+```{r}
+# Convert OCCUR_TIME to a proper time format
+df_descriptive$OCCUR_TIME <- format(strptime(df_descriptive$OCCUR_TIME, format = "%H:%M:%S"), "%H:%M:%S")
+
+# Plotting the density of the occurrence time
+ggplot(df_descriptive, aes(x = as.POSIXct(OCCUR_TIME, format = "%H:%M:%S"))) +
+  geom_density(fill = 'skyblue', alpha = 0.6) +
+  labs(title = 'Density Plot of Shooting Incident Occurrence Time in NYC',
+       x = 'Time of Occurrence',
+       y = 'Density') +
+  scale_x_datetime(date_labels = "%H:%M") +
+  theme_minimal()
+```
+
+## geo
+
+### Table showing Top 10 total incident NTA in Each Borough
+
+```{r}
+
+# Table showing Top 10 total incident NTA in Each Borough
+incident_by_nta_borough <- df_descriptive %>%
+  drop_na() %>%
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n()) %>%
+  arrange(BORO, desc(total_incidents)) %>%
+  group_by(BORO) %>%
+  slice_max(n = 10, order_by = total_incidents) %>%
+  select(-total_incidents) %>%
+  group_by(BORO) %>%
+  mutate(row_num = row_number()) %>%
+  pivot_wider(names_from = BORO, values_from = NTA) %>%
+  unnest(cols = c(BRONX, BROOKLYN, MANHATTAN, QUEENS, `STATEN ISLAND`)) %>%
+  select(row_num, everything())%>%
+  slice(1:10)
+
+# Display the table in the desired format
+kable(incident_by_nta_borough, caption = "Top 10 NTAs with Total Shooting Incidents in Each Borough (2017-2023)")
+```
+
+### Table showing Top 10 NTAs with the Highest Total Shooting Incidents
+
+```{r}
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents
+top_10_nta_overall <- df_descriptive %>%
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents")
+```
+
+#### MANHATTAN
+
+```{r}
+
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents in MANHATTAN
+top_10_nta_overall_manhattan <- df_descriptive %>%
+  filter(BORO == 'MANHATTAN') %>% 
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall_manhattan, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents in MANHATTAN")
+```
+
+#### BROOKLYN
+
+```{r}
+
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents in BROOKLYN
+top_10_nta_overall_brooklyn <- df_descriptive %>%
+  filter(BORO == 'BROOKLYN') %>% 
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall_brooklyn, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents in BROOKLYN")
+```
+
+#### BRONX
+
+```{r}
+
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents in BROOKLYN
+top_10_nta_overall_bronx <- df_descriptive %>%
+  filter(BORO == 'BRONX') %>% 
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall_bronx, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents in BRONX")
+```
+
+#### QUEENS
+
+```{r}
+
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents in BROOKLYN
+top_10_nta_overall_queens <- df_descriptive %>%
+  filter(BORO == 'QUEENS') %>% 
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall_queens, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents in QUEENS")
+```
+
+#### STATEN ISLAND
+
+```{r}
+
+# Table showing Top 10 NTAs with the Highest Total Shooting Incidents in BROOKLYN
+top_10_nta_overall_staten <- df_descriptive %>%
+  filter(BORO == 'STATEN ISLAND') %>% 
+  group_by(BORO, NTA) %>%
+  summarise(total_incidents = n(),
+            total_population = first(Total_population_nta),
+            percent_poverty = first(Percent_poverty),
+            percent_education = first(Percent_education)) %>%
+  arrange(desc(total_incidents)) %>%
+  ungroup() %>%
+  slice(1:10) %>%
+  select(BORO, NTA, total_incidents, total_population, percent_poverty, percent_education)
+# Display the table in the desired format
+kable(top_10_nta_overall_staten, digits = 2, caption = "Top 10 NTAs with the Highest Total Shooting Incidents in STATEN ISLAND")
+```
+
+### Table showing Top 10 NTAs with the Highest Incident Rate
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate <- top_10_incident_rate %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in Each Boroug")
+```
+
+#### MANHATTAN
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate_manhattan <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'MANHATTAN') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate_manhattan <- top_10_incident_rate_manhattan %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate_manhattan, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in MANHATTAN")
+```
+
+#### BROOKLYN
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate_brooklyn <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'BROOKLYN') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate_brooklyn <- top_10_incident_rate_brooklyn %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate_brooklyn, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in BROOKLYN")
+```
+
+#### BRONX
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate_bronx <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'BRONX') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate_bronx <- top_10_incident_rate_bronx %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate_bronx, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in BRONX")
+```
+
+#### QUEENS
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate_queens <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'QUEENS') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate_queens <- top_10_incident_rate_queens %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate_queens, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in QUEENS")
+```
+
+#### STATEN ISLAND
+
+```{r}
+# Get the Top 10 NTAs with the Highest Incident Rate by Year
+top_10_incident_rate_staten <- df_descriptive %>%
+  distinct(incident_rate_by_year_nta, .keep_all = TRUE) %>%
+  filter(BORO == 'STATEN ISLAND') %>% 
+  filter(NTAType == 'Residential') %>%
+  arrange(desc(incident_rate_by_year_nta)) %>%
+  slice(1:10)
+
+# Pull information for the Top 10 NTAs
+top_10_nta_incident_rate_staten <- top_10_incident_rate_staten %>%
+  select(NTA, BORO, incident_rate = incident_rate_by_year_nta,
+         total_population = Total_population_nta,
+         percent_poverty = Percent_poverty,
+         percent_education = Percent_education)
+
+# Display the table in the desired format
+kable(top_10_nta_incident_rate_staten, digits = 6, caption = "Top 10 NTAs with the Highest Incident Rate by Year in STATEN ISLAND")
+```
+
+## victim
+### Plot: Description of Victims
+
+```{r}
+# Plot: Description of Victims
+victim_summary <- df_descriptive %>%
+  filter(VIC_SEX %in% c("M", "F")) %>%  # Filter out unknown
+  group_by(VIC_SEX, VIC_AGE_GROUP, VIC_RACE) %>%
+  summarise(total_victims = n()) %>%
+  drop_na()
+
+
+# Plotting the description of male victims
+ggplot(victim_summary %>% filter(VIC_SEX == "M"), aes(x = VIC_AGE_GROUP, y = total_victims, fill = VIC_RACE)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(title = "Description of Male Shooting Victims by Age Group and Race",
+       x = "Victim Age Group",
+       y = "Number of Victims",
+       fill = "Victim Race") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Plotting the description of female victims
+ggplot(victim_summary %>% filter(VIC_SEX == "F"), aes(x = VIC_AGE_GROUP, y = total_victims, fill = VIC_RACE)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  labs(title = "Description of Female Shooting Victims by Age Group and Race",
+       x = "Victim Age Group",
+       y = "Number of Victims",
+       fill = "Victim Race") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### Plot: Bar chart showing all victim's age
+
+```{r}
+# Plot: Bar chart showing victim's age
+ggplot(df_descriptive %>% filter(!is.na(VIC_AGE_GROUP)& VIC_AGE_GROUP != 1022), aes(x = VIC_AGE_GROUP)) +
+  geom_bar(fill = "steelblue") +
+  labs(title = "Bar Chart of Victim's Age",
+       x = "Victim Age Group",
+       y = "Count of Victims") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## 

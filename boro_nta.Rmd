@@ -1,0 +1,487 @@
+---
+title: "boro_nta"
+output: html_document
+date: "2024-12-03"
+---
+
+load packages
+```{r}
+library(ggplot2)
+library(readxl)
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(sf)
+library(plotly)
+library(geojsonio)
+```
+
+load dataset
+```{r}
+df_descriptive=read_csv("filtered_merged_dataset_sample.csv")
+data_final <- read_csv("data_final.csv")
+```
+
+
+Plot of the number of incidents in each borough for each year
+ 
+```{r}
+# Summarize data: count the number of incidents by borough and year
+incident_summary <- df_descriptive %>%
+  group_by(BORO, Year) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop") %>%
+  # Ensure missing years and boroughs are included
+  complete(BORO, Year = full_seq(min(df_descriptive$Year):max(df_descriptive$Year), 1), fill = list(Number_of_Incidents = 0))
+
+# Create the bar plot
+ggplot(incident_summary, aes(x = Year, y = Number_of_Incidents, fill = BORO)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Number of Incidents in Each Borough by Year",
+    x = "Year",
+    y = "Number of Incidents",
+    fill = "Borough"
+  ) +
+  scale_x_continuous(breaks = seq(min(df_descriptive$Year), max(df_descriptive$Year), by = 1)) +
+  theme_minimal()
+```
+
+
+ 
+##Total incidents per NTA
+ 
+Load spatial data (replace with actual shapefile path)
+```{r}
+nta_shape <- st_read("nynta2020_24d/nynta2020.shp")
+cdta_shape = st_read("nycdta2020_24d/nycdta2020.shp")
+boro_shape = st_read("Borough Boundaries/geo_export_391a75ed-0ae4-4c88-8c30-3588c75bd01e.shp")
+```
+
+
+```{r}
+# Prepare incident data: count incidents per NTA_clean
+nta_incident_counts <- data_final %>%
+  group_by(NTA) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+
+# Merge spatial data with incident counts
+nta_map_data <- nta_shape %>%
+  left_join(nta_incident_counts, by = c("NTAName" = "NTA"))
+
+# Create custom breaks for Number_of_Incidents
+nta_map_data <- nta_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 400, by = 80),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-80", "81-160", "161-240", "241-320", "321-400"),
+      include.lowest = TRUE
+    )
+  )
+
+
+```
+
+
+
+
+
+Plot the map
+
+```{r}
+# Plot the map with custom ranges
+ggplot(data = nta_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+    geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "black") +  # Add labels
+  scale_fill_manual(
+    values = c(
+      "0-80" = "#b2e2e2",
+      "81-160" = "skyblue",
+      "161-240" = "#66c2a4",
+      "241-320" = "#2ca25f",
+      "321-400" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC NTAs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-400, 80 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+```
+
+
+```{r}
+unmatched_nta <- setdiff(nta_shape$NTAName, data_final$NTA)
+unmatched_nta
+```
+
+
+
+
+
+
+
+summarize CDTA and BORO
+```{r}
+## There is space between letter and number in CDTA, I deleted the space below
+data_final$CDTA <- gsub(" ", "", data_final$CDTA)
+
+cdta_incident_counts <- data_final %>%
+  group_by(CDTA) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+
+
+```
+
+ 
+ merge datasets
+```{r}
+# Prepare incident data: count incidents per NTA_clean
+cdta_incident_counts <- data_final %>%
+  group_by(CDTA) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")
+
+# Merge spatial data with incident counts
+cdta_map_data <- cdta_shape %>%
+  left_join(cdta_incident_counts, by = c("CDTA2020" = "CDTA"))
+
+# Create custom breaks for Number_of_Incidents
+cdta_map_data <- cdta_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 400, by = 80),  # Breaks from 0 to 1000, every 200 cases
+      labels = c("0-80", "81-160", "161-240", "241-320", "321-400"),
+      include.lowest = TRUE
+    )
+  )
+
+
+
+
+```
+
+
+```{r}
+# Plot the map with custom ranges
+ggplot(data = cdta_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "black") +  # Add labels
+  scale_fill_manual(
+    values = c(
+      "0-80" = "#b2e2e2",
+      "81-160" = "skyblue",
+      "161-240" = "#66c2a4",
+      "241-320" = "#2ca25f",
+      "321-400" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC CDTAs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-400, 80 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(), 
+    axis.title.x = element_blank(),  # Remove x-axis label
+    axis.title.y = element_blank()
+  )
+```
+
+
+```{r}
+
+```
+
+
+ 
+```{r}
+# Count the boro incident
+boro_incident_counts <- data_final %>%
+  group_by(BORO) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop")  %>%
+  mutate(BORO = tolower(BORO) )
+
+# Lowercase the boro in boro_shape
+boro_shape = boro_shape %>%
+  mutate(boro_name = tolower(boro_name))
+ 
+
+# Merge spatial data with incident counts
+boro_map_data <- boro_shape %>%
+  left_join(boro_incident_counts, by = c("boro_name" = "BORO"))
+
+# Create custom breaks for Number_of_Incidents
+boro_map_data <- boro_map_data %>%
+  mutate(
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 4000, by = 800),  # Breaks from 0 to 4000, every 800 cases
+      labels = c("0-800", "801-1600", "1601-2400", "2401-3200", "3201-4000"),
+      include.lowest = TRUE
+    )
+  )
+```
+
+
+```{r}
+# Plot the map with custom ranges
+ggplot(data = boro_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+  geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "black") +  # Add labels
+  scale_fill_manual(
+    values = c(
+      "0-800" = "#b2e2e2",
+      "801-1600" = "skyblue",
+      "1601-2400" = "#66c2a4",
+      "2401-3200" = "#2ca25f",
+      "3201-4000" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC BOROs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-4000, 800 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    axis.title.x = element_blank(),  # Remove x-axis label
+    axis.title.y = element_blank()
+  )
+```
+Plotly of boro map 
+
+
+```{r}
+boro_map_data <- boro_map_data %>%
+  mutate(
+    hover_text = paste("Borough:", boro_name, "<br>Total Incidents:", Number_of_Incidents)
+  )
+
+# Create the interactive plot with click functionality
+plot <- plot_ly(
+  data = boro_map_data,
+  type = "scattermapbox",
+  split = ~boro_name,  # Separate polygons by boroughs
+  color = ~Number_of_Incidents,  # Color based on the number of incidents
+  colors = "viridis",  # Use a color scale
+  text = ~hover_text,  # Display hover text
+  hoverinfo = "text",
+  marker = list(size = 8, opacity = 0.7)
+) %>%
+  layout(
+    title = "Total Number of Incidents Across NYC BOROs (2017-2023)",
+    mapbox = list(
+      style = "carto-positron",  # Base map style
+      center = list(lon = -74.0060, lat = 40.7128),  # Center map on NYC
+      zoom = 10
+    )
+  )
+
+# Add click functionality to display the borough name and number of incidents
+plot <- plot %>%
+  event_register("plotly_click") %>%
+  htmlwidgets::onRender("
+    function(el, x) {
+      el.on('plotly_click', function(d) {
+        var point = d.points[0];
+        var text = point.text;
+        alert('You clicked on: ' + text);
+      });
+    }
+  ")
+
+# Display the interactive plot
+plot
+```
+
+
+plotly for CDTA
+
+```{r}
+# Prepare CDTA-level data
+cdta_map_data <- cdta_map_data %>%
+  mutate(
+    hover_text = paste("CDTA:", CDTA2020, "<br>Total Incidents:", Number_of_Incidents)
+  )
+```
+
+
+```{r}
+# Create the interactive plot with click functionality
+plot <- plot_ly(
+  data = cdta_map_data,
+  type = "scattermapbox",
+  split = ~CDTA2020,  # Separate polygons by boroughs
+  color = ~Number_of_Incidents,  # Color based on the number of incidents
+  colors = "viridis",  # Use a color scale
+  text = ~hover_text,  # Display hover text
+  hoverinfo = "text",
+  marker = list(size = 8, opacity = 0.7)
+) %>%
+  layout(
+    title = "Total Number of Incidents Across NYC CDTAs (2017-2023)",
+    mapbox = list(
+      style = "carto-positron",  # Base map style
+      center = list(lon = -74.0060, lat = 40.7128),  # Center map on NYC
+      zoom = 10
+    )
+  )
+
+# Add click functionality to display the borough name and number of incidents
+plot <- plot %>%
+  event_register("plotly_click") %>%
+  htmlwidgets::onRender("
+    function(el, x) {
+      el.on('plotly_click', function(d) {
+        var point = d.points[0];
+        var text = point.text;
+        alert('You clicked on: ' + text);
+      });
+    }
+  ")
+
+# Display the interactive plot
+plot
+
+```
+
+```{r}
+# Remove any trailing spaces or mismatches in CDTA identifiers:
+cdta_shape$CDTA2020 <- gsub(" ", "", cdta_shape$CDTA2020)
+data_final$CDTA <- gsub(" ", "", data_final$CDTA)
+```
+
+
+```{r}
+# Identify Missing Matches
+unmatched_cdta <- setdiff(cdta_shape$CDTA2020, data_final$CDTA)
+print(unmatched_cdta)  # These are the CDTAs that are missing from the dataset
+```
+
+
+```{r}
+# Assign 0 to Missing Areas
+cdta_incident_counts <- data_final %>%
+  group_by(CDTA) %>%
+  summarise(Number_of_Incidents = n(), .groups = "drop") %>%
+  complete(CDTA = unique(cdta_shape$CDTA2020), fill = list(Number_of_Incidents = 0))
+
+```
+
+
+```{r}
+#Re-Merge the Data
+cdta_map_data <- cdta_shape %>%
+  left_join(cdta_incident_counts, by = c("CDTA2020" = "CDTA"))
+
+```
+
+```{r}
+# Update NA Handling
+cdta_map_data <- cdta_map_data %>%
+  mutate(
+    Number_of_Incidents = ifelse(is.na(Number_of_Incidents), 0, Number_of_Incidents),
+    Incident_Range = cut(
+      Number_of_Incidents,
+      breaks = seq(0, 600, by = 120), 
+      labels = c("0-120", "121-240", "241-360", "361-480", "481-600"),
+      include.lowest = TRUE
+    )
+  )
+```
+
+
+```{r}
+ggplot(data = cdta_map_data) +
+  geom_sf(aes(fill = Incident_Range), color = "white", size = 0.2) +
+ geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "black") +  # Add labels+
+  scale_fill_manual(
+    values = c(
+      "0-120" = "#b2e2e2",
+      "121-240" = "skyblue",
+      "241-360" = "#66c2a4",
+      "361-480" = "#2ca25f",
+      "481-600" = "#006d2c"
+    ),
+    name = "Number of Incidents"
+  ) +
+  labs(
+    title = "Total Number of Incidents Across NYC CDTAs from 2017 to 2023",
+    subtitle = "Incidents grouped by range (0-600, 120 breaks)",
+    caption = "Data Source: Your dataset"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+```
+check unmatch CDTA
+```{r}
+unmatched <- cdta_shape %>%
+  filter(!CDTA2020 %in% data_final$CDTA)
+print(unmatched)  # This shows unmatched areas
+```
+
+
+```{r}
+# Filter out borough
+boroughs <- unique(cdta_map_data$BoroName)
+```
+
+```{r}
+for (b in boroughs) {
+    borough_data <- cdta_map_data %>%
+        filter(BoroName == b)
+    plot <- ggplot(data = borough_data) +
+        geom_sf(aes(fill = Number_of_Incidents), color = "black") +
+      geom_sf_text(aes(label = Number_of_Incidents), size = 3, color = "white") +  # Add labels+
+        scale_fill_gradientn(
+      colors = c("blue", "green", "yellow", "red"), # Custom color scale
+      name = "Number of Incidents"
+    ) +
+        labs(
+            title = paste("CDTA Incidents in", b),
+            subtitle = "2017 to 2023",
+            x = "Longitude",
+            y = "Latitude"
+        ) +
+        theme_minimal()
+    print(plot)  # Move inside the loop
+}
+```
+
+
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+ 

@@ -1,0 +1,281 @@
+---
+title: "p8105_nyc_shooting"
+output: html_document
+date: "2024-11-19"
+---
+```{r, message=FALSE}
+library(sf)
+library(dplyr)
+library(readr)
+library(stringr)
+library(lubridate)
+library(timeDate)
+library(suncalc)
+library(purrr)
+library(readxl)
+library(tidyverse)
+
+```
+# This part focus on data cleaning, tidying and merging.
+## adding neighborhood information to the shooting dataset
+```{r, message=FALSE}
+df=read_csv("NYPD_Shooting_Incident_Data__Historic__20241119.csv")
+
+# Ensure coordinate columns are numeric
+df = df %>%
+  mutate(
+    X_COORD_CD = as.numeric(X_COORD_CD),
+    Y_COORD_CD = as.numeric(Y_COORD_CD)
+  )
+
+# Convert to sf object with CRS EPSG:2263
+df_sf = st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
+
+# Download and read the GeoJSON file
+download.file(
+  url = "https://data.insideairbnb.com/united-states/ny/new-york-city/2024-09-04/visualisations/neighbourhoods.geojson",
+  destfile = "neighbourhoods.geojson",
+  mode = "wb"
+)
+neighbourhoods = st_read("neighbourhoods.geojson")
+
+# Check and transform CRS of neighborhoods
+if (st_crs(neighbourhoods)$epsg != 2263) {
+  neighbourhoods = st_transform(neighbourhoods, crs = 2263)
+}
+
+# Perform the spatial join
+df_joined = st_join(df_sf, neighbourhoods, left = TRUE)
+
+# Add neighborhood information to the data frame
+df$Neighborhood = df_joined$neighbourhood
+
+# Download and use the neighborhoods CSV file
+download.file(
+  url = "https://data.insideairbnb.com/united-states/ny/new-york-city/2024-09-04/visualisations/neighbourhoods.csv",
+  destfile = "neighbourhoods.csv",
+  mode = "wb"
+)
+neighborhoods_csv = read_csv("neighbourhoods.csv")
+
+# Merge additional attributes if necessary
+df = df %>%
+  left_join(neighborhoods_csv, by = c("Neighborhood" = "neighbourhood"))
+
+```
+## add nta data
+```{r}
+df$X_COORD_CD <- as.numeric(df$X_COORD_CD)
+df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
+
+# Convert to sf object
+df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
+
+# Read neighborhood shapefile
+neighborhoods <- st_read("./nynta2020_24d/nynta2020.shp")
+
+# Transform CRS if necessary
+neighborhoods <- st_transform(neighborhoods, crs = st_crs(df_sf))
+
+# Perform spatial join
+df_joined <- st_join(df_sf, neighborhoods, left = TRUE)
+
+# Add neighborhood information to your original data frame
+df$NTA <- df_joined$NTAName  # Adjust based on actual column name
+```
+
+## add 2010 nta data
+```{r}
+df$X_COORD_CD <- as.numeric(df$X_COORD_CD)
+df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
+
+# Convert to sf object
+df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
+
+# Read neighborhood shapefile
+neighborhoods_2010 <- st_read("./nynta2010_24d/nynta2010.shp")
+
+# Transform CRS if necessary
+neighborhoods_2010 <- st_transform(neighborhoods_2010, crs = st_crs(df_sf))
+
+# Perform spatial join
+df_joined <- st_join(df_sf, neighborhoods_2010, left = TRUE)
+
+# Add neighborhood information to your original data frame
+df$NTA_2010 <- df_joined$NTAName  # Adjust based on actual column name
+```
+
+## add time information
+for future study, i need to add variables related to date and time of the gunshot incidence.
+
+### decide whether the date of shooting is national holiday
+```{r}
+df$OCCUR_DATE <- as.Date(df$OCCUR_DATE, format = "%m/%d/%Y")
+
+# Define the range of years, handling NA values
+years <- seq(
+  year(min(df$OCCUR_DATE, na.rm = TRUE)),
+  year(max(df$OCCUR_DATE, na.rm = TRUE)),
+  by = 1
+)
+us_holidays = holidayNYSE(years)
+us_holidays = as.Date(us_holidays)
+# Add a new column indicating whether the date is a holiday, year and month information of a date
+df = df %>%
+  mutate(
+    Is_Holiday = OCCUR_DATE %in% us_holidays,
+    Year = year(OCCUR_DATE),
+    Month = month(OCCUR_DATE)
+  )
+
+```
+### decide whether the sky is dark at the shooting time, using the dawn and dusk time:
+```{r}
+df$OCCUR_DATE <- as.character(df$OCCUR_DATE)
+df$OCCUR_TIME <- as.character(df$OCCUR_TIME)
+
+# Combine OCCUR_DATE and OCCUR_TIME into a single datetime string
+datetime_str <- paste(df$OCCUR_DATE, df$OCCUR_TIME)
+
+# Parse datetime using lubridate
+df$OCCUR_DATETIME <- ymd_hms(datetime_str, tz = "America/New_York")
+# Extract date from OCCUR_DATETIME
+df$DATE <- as.Date(df$OCCUR_DATETIME)
+
+# Get unique dates
+unique_dates <- unique(df$DATE)
+latitude <- 40.7128
+longitude <- -74.0060
+# Calculate dawn and dusk times
+sun_times <- getSunlightTimes(
+  date = unique_dates,
+  lat = latitude,
+  lon = longitude,
+  keep = c("dawn", "dusk"),
+  tz = "America/New_York"
+)
+
+# Merge with the original dataframe
+df <- df %>%
+  left_join(sun_times[, c("date", "dawn", "dusk")], by = c("DATE" = "date"))
+
+# Determine if the sky is dark considering twilight
+df <- df %>%
+  mutate(
+    Sky_Is_Dark = OCCUR_DATETIME < dawn | OCCUR_DATETIME >= dusk
+  )
+df <- df %>%
+  select(-DATE, -dawn, -dusk)
+```
+
+## adding total population data of each NTA
+
+```{r}
+popu <- suppressWarnings(
+  read_excel("nyc_detailed-race-and-ethnicity-data_2020_core-geographies.xlsx", 
+             sheet = 1,
+             range = "A4:I2599",
+             col_types = c("numeric", "text", "text", "text", "numeric", "text", "text", "numeric", "numeric")) |>
+    filter(`Orig Order` >= 2334 & `Orig Order` <= 2595) |>
+    select(GeoName, NTAType, Pop) |>
+    rename(Total_population = Pop)
+)
+
+df <- df |>
+  left_join(popu, by = c("NTA" = "GeoName")) |>
+  mutate(
+    NTAType = case_when(
+      NTAType == 0 ~ "Residential",
+      NTAType == 9 ~ "Park",
+      NTAType == 8 ~ "Airport",
+      NTAType == 7 ~ "Cemetery",
+      NTAType == 6 ~ "Other Special Areas",
+      NTAType == 5 ~ "Rikers Island",
+      is.na(NTAType) ~ "Unknown")
+  )
+
+```
+
+## adding cdta data
+
+```{r}
+df$X_COORD_CD <- as.numeric(df$X_COORD_CD)
+df$Y_COORD_CD <- as.numeric(df$Y_COORD_CD)
+
+df_sf <- st_as_sf(df, coords = c("X_COORD_CD", "Y_COORD_CD"), crs = 2263)
+
+cdta <- st_read("./nycdta2020_24d/nycdta2020.shp")
+
+cdta <- st_transform(cdta, crs = st_crs(df_sf))
+
+df_joined <- st_join(df_sf, cdta, left = TRUE)
+
+df$CDTA <- df_joined$CDTA2020
+
+df$CDTA <- gsub("([A-Z]{2})(\\d{2})", "\\1 \\2", df$CDTA)
+
+```
+
+## add poverty
+```{r}
+neighborhood_poverty <- read.csv("./data/neighborhood_poverty.csv")
+
+# Select specific columns from neighborhood_poverty
+neighborhood_poverty_selected <- neighborhood_poverty %>% 
+  filter(TimePeriod == '2017-21') %>% 
+  filter(GeoType == 'NTA2020' ) %>% 
+  select(Number, Percent, Geography)
+# Merge the dataframes on 'NTA' and 'Geography', keeping all information from data_processing
+df_poverty <- left_join(df, neighborhood_poverty_selected, by = c("NTA" = "Geography"))
+
+# Rename columns after merging
+df_poverty <- df_poverty %>% 
+  rename(Number_poverty = Number, Percent_poverty = Percent)
+```
+
+## add education
+```{r}
+neighborhood_education=read.csv("./data/graduated_high_school.csv")
+neighborhood_education_selected <- neighborhood_education %>% 
+  filter(TimePeriod == '2017-21') %>% 
+  filter(GeoType == 'NTA2020' ) %>% 
+  select(Number, Percent, Geography)
+# Merge the dataframes on 'NTA' and 'Geography', keeping all information from data_processing
+df_education <- left_join(df_poverty, neighborhood_education_selected, by = c("NTA" = "Geography"))
+
+# Rename columns after merging
+df_education <- df_education %>% 
+  rename(Number_education = Number, Percent_education = Percent)
+# filter between 2017 and 2023
+df_education$OCCUR_DATE <- as.Date(df_education$OCCUR_DATE, format = "%Y-%m-%d")
+
+# Filter the incidents that happened between 2017 and 2023
+df_education <- df_education %>% 
+  filter(OCCUR_DATE >= as.Date("2017-01-01") & OCCUR_DATE <= as.Date("2023-12-31"))
+```
+
+```{r}
+#add a column that shows the shooting incident rate of NTAs in that year
+df_education <- df_education %>%
+  group_by(NTA, Year) %>%
+  mutate(incident_rate_by_year_nta = (n() / Total_population)*100) %>%
+  ungroup()
+
+#add a column that shows the shooting incident rate of boroughs in that year
+boro_population <- df_education %>%
+  group_by(BORO, Year) %>%
+  summarise(total_population_boro = sum(Total_population, na.rm = TRUE)) %>%
+  ungroup()
+
+df_education <- df_education %>%
+  left_join(boro_population, by = c("BORO", "Year")) %>%
+  group_by(BORO, Year) %>%
+  mutate(incident_rate_by_year_boro = (n() / total_population_boro)*100) %>%
+  ungroup()
+
+#Rename a column
+df_education <- df_education %>%
+  rename(Total_population_nta = Total_population)
+
+write.csv(df_education, "data_final.csv", row.names = FALSE)
+```
