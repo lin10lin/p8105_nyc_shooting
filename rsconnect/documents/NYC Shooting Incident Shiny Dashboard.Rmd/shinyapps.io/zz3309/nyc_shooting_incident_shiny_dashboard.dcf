@@ -1,0 +1,10 @@
+name: nyc_shooting_incident_shiny_dashboard
+title:
+username: zz3309
+account: zz3309
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13527237
+bundleId: 9464894
+url: https://zz3309.shinyapps.io/nyc_shooting_incident_shiny_dashboard/
+version: 1
