@@ -221,3 +221,178 @@ data_clean |>
 
 In Staten Island, the relationship between poverty and incident rates is less pronounced compared to other boroughs. 
 
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(plotly)
+
+# 1. Load your incidents data
+incidents_data <- read.csv("data_final.csv")
+
+# 2. Filter data from 2017 to 2023
+incidents_filtered <- incidents_data %>%
+  filter(Year >= 2017 & Year <= 2023)
+
+# 3. Aggregate total incidents by CDTA
+incidents_by_cdta <- incidents_filtered %>%
+  group_by(CDTA) %>%
+  summarise(
+    total_incidents = n(),
+    Longitude = mean(Longitude, na.rm = TRUE),
+    Latitude = mean(Latitude, na.rm = TRUE)
+  ) %>%
+  ungroup()
+
+# 4. Define initial breaks from 0 to 400 with intervals of 5
+initial_breaks <- seq(0, 400, by = 5)
+
+# 5. Calculate the maximum number of incidents
+max_incidents <- max(incidents_by_cdta$total_incidents, na.rm = TRUE)
+
+# 6. Check if maximum incidents exceed 400 and adjust breaks and labels accordingly
+if (max_incidents > 400) {
+  # Extend breaks to include all incidents > 400
+  extended_breaks <- c(initial_breaks, Inf)
+  
+  # Create labels for all intervals, including the last one for incidents >400
+  labels <- c(
+    paste(initial_breaks[-length(initial_breaks)], initial_breaks[-1], sep = "-"),
+    paste0("401+", max_incidents)
+  )
+} else {
+  # No need to extend breaks
+  extended_breaks <- initial_breaks
+  labels <- paste(initial_breaks[-length(initial_breaks)], initial_breaks[-1], sep = "-")
+}
+
+# 7. Validate that the number of labels matches the number of intervals
+num_intervals <- length(extended_breaks) - 1
+num_labels <- length(labels)
+
+if (num_intervals != num_labels) {
+  stop("Number of labels does not match the number of intervals.")
+}
+
+# 8. Assign incident ranges
+incidents_by_cdta <- incidents_by_cdta %>%
+  mutate(
+    incident_range = cut(
+      total_incidents,
+      breaks = extended_breaks,
+      include.lowest = TRUE,
+      right = FALSE,  # Left-inclusive intervals [a, b)
+      labels = labels
+    )
+  )
+
+# 9. Verify the distribution of incident ranges
+print(table(incidents_by_cdta$incident_range, useNA = "ifany"))
+
+# 10. Check for missing coordinates and exclude them
+missing_coords <- incidents_by_cdta %>%
+  filter(is.na(Longitude) | is.na(Latitude))
+
+if (nrow(missing_coords) > 0) {
+  cat("Warning: The following CDTAs have missing coordinates and will be excluded from the plot:\n")
+  print(missing_coords$CDTA)
+  
+  # Exclude CDTAs with missing coordinates
+  incidents_by_cdta <- incidents_by_cdta %>%
+    filter(!is.na(Longitude) & !is.na(Latitude))
+}
+
+# 11. Set your Mapbox access token
+Sys.setenv('MAPBOX_TOKEN' = 'your_mapbox_access_token')  # Replace with your actual token
+
+# 12. Create the scatter map
+incident_map <- plot_ly(
+  data = incidents_by_cdta,
+  type = "scattermapbox",
+  mode = "markers",
+  lon = ~Longitude,  # Use exact column name with correct case
+  lat = ~Latitude,   # Use exact column name with correct case
+  color = ~incident_range,
+  colors = "viridis",  # Use lowercase if necessary
+  marker = list(
+    size = 8,
+    opacity = 0.7
+  ),
+  text = ~paste(
+    "CDTA: ", CDTA,
+    "<br>Total Incidents: ", total_incidents,
+    "<br>Incident Range: ", incident_range
+  )
+) %>%
+  layout(
+    title = "Total Number of Incidents Across NYC CDTAs (2017-2023)",
+    mapbox = list(
+      style = "carto-positron",  # Choose desired map style
+      center = list(lon = -74.0060, lat = 40.7128),  # Centered on NYC
+      zoom = 10
+    ),
+    legend = list(title = list(text = 'Incident Range'))
+  )
+
+# 13. Display the map
+incident_map
+
+```
+
+```{r}
+
+
+# Load necessary libraries
+library(dplyr)
+library(tidyr)
+library(plotly)
+
+# 1. Load your incidents data
+incidents_data <- read.csv("data_final.csv")
+
+# 2. Filter data from 2017 to 2023 and remove rows with missing values in key columns
+incidents_filtered <- incidents_data %>%
+  filter(Year >= 2017 & Year <= 2023) %>%
+  drop_na(Sky_Is_Dark, Longitude, Latitude, NTA, OCCUR_TIME)  # Ensure essential columns have no NA
+
+
+# Optional: Relabel Sky_Is_Dark for better readability
+incidents_filtered <- incidents_filtered %>%
+  mutate(Sky_Condition = ifelse(Sky_Is_Dark, "Night", "Day"))
+
+# 3. Set your Mapbox access token
+Sys.setenv('MAPBOX_TOKEN' = 'your_mapbox_access_token')  # Replace with your actual token
+
+# 4. Create the interactive map using the filtered data
+plot_ly(data = incidents_filtered, 
+        type = "scattermapbox",       # Specifies that we're creating a Mapbox scatter plot
+        mode = "markers",             # Use markers to represent data points
+        lon = ~Longitude,             # Longitude for x-axis (map)
+        lat = ~Latitude,              # Latitude for y-axis (map)
+        color = ~Sky_Condition,       # Color markers based on Sky_Condition
+        colors = c("Day" = "orange", "Night" = "blue"), # Assign specific colors
+        marker = list(size = 5,        # Set marker size
+                      opacity = 0.7),  # Set marker opacity for better visibility
+        text = ~paste("NTA:", NTA,
+                      "<br>Time of Incident:", OCCUR_TIME,
+                      "<br>Sky Condition:", Sky_Condition)  # Hover text
+) |> 
+  layout(
+    title = "DAY OR NIGHT Incidents in NYC",  # Set the plot title
+    mapbox = list(
+      style = "carto-positron",      # Map style
+      center = list(lon = -73.94, lat = 40.84),  # Center the map on NYC
+      zoom = 12                      # Set zoom level
+    ),
+    showlegend = TRUE,               # Display the legend
+    legend = list(title = list(text = 'Sky Condition'))  # Legend title
+  )
+
+```
+
+
+
+
+
+
+
+
