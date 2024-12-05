@@ -21,28 +21,6 @@ df_descriptive=read_csv("data_final.csv")
 ```
 ## time
 
-### Plotting the line chart for shooting incidents over time
-
-```{r}
-# Converting OCCUR_DATE to Date type
-df_descriptive$OCCUR_DATE <- as.Date(df_descriptive$OCCUR_DATE, format = "%Y-%m-%d")
-
-# Grouping the data by date to count the number of incidents
-date_counts <- as.data.frame(table(df_descriptive$OCCUR_DATE))
-colnames(date_counts) <- c('Date', 'Count')
-date_counts$Date <- as.Date(date_counts$Date)
-
-# Plotting the line chart for shooting incidents over time
-ggplot(date_counts, aes(x = Date, y = Count)) +
-  geom_line(color = 'blue') +
-  labs(title = 'Shooting Incidents Over Time in NYC',
-       x = 'Date',
-       y = 'Number of Shooting Incidents') +
-  theme_minimal()
-```
-
-### Plotting the line chart for shooting incidents by year with data points labeled
-
 ```{r}
 # Grouping the data by year to count the number of incidents
 df_descriptive$Year <- as.factor(df_descriptive$Year)
@@ -60,8 +38,8 @@ ggplot(year_counts, aes(x = Year, y = Count, group = 1)) +
        y = 'Number of Shooting Incidents') +
   theme_minimal()
 ```
+* The chart shows a stable trend in shooting incidents from 2017 to 2019, followed by a sharp increase in 2020, likely linked to socio-economic factors like the COVID-19 pandemic. Incidents peaked in 2021 and then declined through 2023.
 
-### Plotting the bar chart for shooting incidents by month
 
 ```{r}
 # Grouping the data by month
@@ -78,6 +56,7 @@ ggplot(month_counts, aes(x = Month, y = Count)) +
        y = 'Number of Shooting Incidents') +
   theme_minimal()
 ```
+* The bar chart shows a seasonal trend in shooting incidents in NYC, with a significant increase during the warmer months, peaking in July (1248 incidents). The highest numbers are seen in June, July, and August, while the lowest are in February (494 incidents) and January (617 incidents), suggesting fewer incidents during colder months. The gradual rise from January to July, followed by a decline towards December, indicates a correlation between warmer weather and increased incidents, potentially due to increased outdoor activities.
 
 ```{r}
 # Convert OCCUR_TIME to a proper time format
@@ -92,6 +71,23 @@ ggplot(df_descriptive, aes(x = as.POSIXct(OCCUR_TIME, format = "%H:%M:%S"))) +
   scale_x_datetime(date_labels = "%H:%M") +
   theme_minimal()
 ```
+* The density plot shows changes in shooting incident trends throughout the day in NYC, with two distinct peaks. The first peak occurs in the late night to early morning hours, and the second peak appears in the evening. The lowest density is observed in the late morning to early afternoon.
+
+
+```{r}
+# Bar chart showing the number of TRUE and FALSE in the Sky_Is_Dark variable
+sky_dark_counts <- df_descriptive %>%
+  group_by(Sky_Is_Dark) %>%
+  summarise(total_incidents = n())
+
+ggplot(sky_dark_counts, aes(x = Sky_Is_Dark, y = total_incidents, fill = Sky_Is_Dark)) +
+  geom_bar(stat = 'identity') +
+  labs(title = 'Number of Shooting Incidents by Sky Condition (Dark vs. Bright)',
+       x = 'Sky Condition (Dark vs. Bright)',
+       y = 'Number of Shooting Incidents') +
+  theme_minimal()
+```
+* The number of shooting incidents when the sky was dark is significantly higher than when it was bright. This might indicate that shootings are more likely to occur during nighttime or low visibility conditions. The higher number of incidents during dark conditions could be due to factors such as reduced visibility, higher activity at night, or fewer people around, making it easier for incidents to occur undetected.
 
 ## geo
 
@@ -401,6 +397,8 @@ ggplot(victim_summary %>% filter(VIC_SEX == "F"), aes(x = VIC_AGE_GROUP, y = tot
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+* The bar charts show the distribution of male and female shooting victims by age group and race in NYC. In both charts, Black victims are the most affected across all age groups, with the highest number of victims in the 18-24 and 25-44 age groups. For males, the 25-44 age group shows a notable peak, while for females, the same age group also has the highest numbers. White Hispanic victims also show considerable numbers, particularly in the 25-44 age group.
+
 
 ### Plot: Bar chart showing all victim's age
 
@@ -414,5 +412,6 @@ ggplot(df_descriptive %>% filter(!is.na(VIC_AGE_GROUP)& VIC_AGE_GROUP != 1022), 
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+* The 25-44 age group has the highest number of victims, significantly more than any other group. The 18-24 age group also shows a considerable number of victims, while the <18 and 45-64 age groups have notably fewer victims. The 65+ age group has the least number of victims.
 
 ## 
